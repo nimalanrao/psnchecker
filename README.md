@@ -21,11 +21,9 @@
 
 - **zero fluff**: pure black #000000 oled interface with sharp zero-radius layout.
 - **accurate separation**: distinguishes owned purchases from playstation plus claims.
-- **platform categorization**: dedicated tabs for ps4 owned, ps5 owned, ps4 ps+, and ps5 ps+.
 - **real-time streaming**: live server-sent events (sse) pipeline tracking fetch progress with live eta.
-- **telegram exporter**: one-tap simplified text list formatted for telegram messages (`game title [ps4/ps5]`).
+- **list exporter**: one-tap simplified text list grouped by platform (ps4 and ps5 sections).
 - **csv download**: full spreadsheet export with title ids, platforms, and license statuses.
-- **game inspector**: view title id, entitlement key, playtime, and store link with smooth animations.
 
 ---
 
@@ -63,7 +61,7 @@ open `http://localhost:3000` in your browser.
 - **copy simple list**:
   - `copy without ps+ list`: copies owned digital purchases only.
   - `copy with ps+ list`: copies all games including claimed ps+ titles.
-  - clean single-line format: `title [ps4]` or `title [ps5]` sorted alphabetically a-z.
+  - clean format: games grouped under ps4 and ps5 headers, sorted a-z.
 - **csv export**: full dataset saved as `psn-game-library.csv`.
 
 ---

@@ -437,32 +437,53 @@ window.inspectGame = function(titleId) {
   dom.gameDetailModal.classList.remove('hidden');
 };
 
-// Copy Simple List Generator (for Telegram / Messaging)
+// Copy Simple List Generator (Grouped by Platform: PS4 then PS5)
 function generateSimpleList(withPlus = false) {
   if (!state.library?.games) return { text: '', count: 0 };
   const allGames = state.library.games;
   const filtered = withPlus ? allGames : allGames.filter(g => !g.isPsPlus);
 
-  const seen = new Set();
-  const lines = [];
+  const ps4Set = new Set();
+  const ps5Set = new Set();
+  const otherSet = new Set();
 
   for (const g of filtered) {
     const title = (g.name || '').trim();
     if (!title) continue;
     const platform = (g.platform || 'PS4').trim().toUpperCase();
-    const line = `${title} [${platform}]`;
-    if (!seen.has(line)) {
-      seen.add(line);
-      lines.push(line);
+
+    if (platform === 'PS4') {
+      ps4Set.add(title);
+    } else if (platform === 'PS5') {
+      ps5Set.add(title);
+    } else {
+      otherSet.add(title);
     }
   }
 
-  // Sort alphabetically A-Z case-insensitively
-  lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const ps4List = Array.from(ps4Set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const ps5List = Array.from(ps5Set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const otherList = Array.from(otherSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  const sections = [];
+
+  if (ps4List.length > 0) {
+    sections.push(['PS4', ...ps4List].join('\n'));
+  }
+
+  if (ps5List.length > 0) {
+    sections.push(['PS5', ...ps5List].join('\n'));
+  }
+
+  if (otherList.length > 0) {
+    sections.push(['OTHER', ...otherList].join('\n'));
+  }
+
+  const totalCount = ps4List.length + ps5List.length + otherList.length;
 
   return {
-    text: lines.join('\n'),
-    count: lines.length
+    text: sections.join('\n\n'),
+    count: totalCount
   };
 }
 

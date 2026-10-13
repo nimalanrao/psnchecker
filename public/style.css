@@ -1741,9 +1741,12 @@ body {
 }
 
 .modal-actions-bar .btn-ps-secondary:hover,
-.btn-ps-secondary:hover {
-  background: #181818 !important;
-  border-color: #666666 !important;
+.modal-actions-bar .btn-ps-secondary:active,
+.btn-ps-secondary:hover,
+.btn-ps-secondary:active {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
 }
 
 /* Primary Button ("View on PlayStation Store ↗") - PURE WHITE MONOCHROME, ZERO BLUE */
@@ -2808,6 +2811,7 @@ body.mode-minimal-oled #syncModal .btn-ps-subtle {
 }
 
 .oled-btn-outline {
+  -webkit-tap-highlight-color: transparent;
   background: transparent;
   border: 1px solid #333333;
   color: #888888;
@@ -2818,16 +2822,20 @@ body.mode-minimal-oled #syncModal .btn-ps-subtle {
   text-decoration: none;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.oled-btn-outline:hover {
-  border-color: #ffffff;
-  color: #ffffff;
+.oled-btn-outline:hover,
+.oled-btn-outline:active,
+.oled-btn-outline:focus,
+.oled-btn-outline:focus-visible {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
 }
 
 /* ==========================================================================
-   MODAL: COPY SIMPLE LIST (TELEGRAM / MESSAGING POPUP)
+   MODAL: COPY SIMPLE LIST (LIST EXPORT POPUP)
    ========================================================================== */
 .copy-modal-dialog {
   width: 100%;
@@ -2876,6 +2884,7 @@ body.mode-minimal-oled #syncModal .btn-ps-subtle {
 }
 
 .copy-option-item {
+  -webkit-tap-highlight-color: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2888,33 +2897,37 @@ body.mode-minimal-oled #syncModal .btn-ps-subtle {
   width: 100%;
   color: #ffffff;
   font-family: inherit;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.copy-option-item:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+.copy-option-item:hover,
+.copy-option-item:active,
+.copy-option-item:focus {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
   transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.8);
 }
 
-.copy-option-item:hover .copy-option-title {
-  color: #000000;
+.copy-option-item:hover *,
+.copy-option-item:active *,
+.copy-option-item:focus * {
+  color: #000000 !important;
 }
 
-.copy-option-item:hover .copy-option-meta {
-  color: #444444;
+.copy-option-item:hover .copy-option-badge,
+.copy-option-item:active .copy-option-badge,
+.copy-option-item:focus .copy-option-badge {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
 }
 
-.copy-option-item:hover .copy-option-badge {
-  background: #000000;
-  color: #ffffff;
-  border-color: #000000;
-}
-
-.copy-option-item:hover .copy-option-action {
-  color: #000000;
+.copy-option-item:hover .copy-option-action,
+.copy-option-item:active .copy-option-action,
+.copy-option-item:focus .copy-option-action {
+  color: #000000 !important;
 }
 
 .copy-option-left {
