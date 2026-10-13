@@ -476,9 +476,9 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`\n======================================================`);
-  console.log(`🎮 PSN Game Library Web GUI v2.1 running!`);
-  console.log(`👉 Open: http://localhost:${PORT}`);
+  console.log(`psn checker running on port ${PORT}!`);
+  console.log(`👉 listening on: 0.0.0.0:${PORT}`);
   console.log(`======================================================\n`);
 });
