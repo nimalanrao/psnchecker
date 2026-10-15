@@ -25,6 +25,94 @@ const MIME_TYPES = {
   ".ico": "image/x-icon"
 };
 
+// =========================================================================
+// SECURITY: Rate limiter to prevent abuse of the fetch API
+// =========================================================================
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // max 5 fetch requests per minute per IP
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return false;
+  }
+
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  return false;
+}
+
+// Cleanup stale rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS * 2) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// =========================================================================
+// SECURITY: Input validation
+// =========================================================================
+function isValidNpssoToken(token) {
+  // NPSSO tokens are exactly 64 alphanumeric characters
+  return typeof token === "string" && /^[A-Za-z0-9]{64}$/.test(token);
+}
+
+function sanitizeToken(rawInput) {
+  if (!rawInput || typeof rawInput !== "string") return "";
+  let token = rawInput.trim().replace(/^["']|["']$/g, "").trim();
+
+  // Handle JSON format: {"npsso": "..."}
+  if (token.startsWith("{") && token.includes("npsso")) {
+    try {
+      const parsed = JSON.parse(token);
+      if (parsed.npsso) token = parsed.npsso.trim();
+    } catch {}
+    const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
+    if (match) token = match[1].trim();
+  }
+
+  return token;
+}
+
+// =========================================================================
+// SECURITY: Set comprehensive security headers on every response
+// =========================================================================
+function setSecurityHeaders(res) {
+  // Prevent MIME type sniffing
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // Prevent clickjacking
+  res.setHeader("X-Frame-Options", "DENY");
+  // XSS protection
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  // Referrer policy
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Permissions policy — disable sensitive APIs
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  // Content Security Policy
+  res.setHeader("Content-Security-Policy", [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https://image.api.playstation.com https://store.playstation.com https://*.playstation.net",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "base-uri 'self'"
+  ].join("; "));
+  // Strict Transport Security (for HTTPS deployments)
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+}
+
 function formatPlayDuration(isoDuration) {
   if (!isoDuration || typeof isoDuration !== "string") return null;
   const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?/);
@@ -58,7 +146,7 @@ function detectPsPlusTier(isPlus, plusGames = []) {
   return {
     tier: "PS_PLUS",
     tierLabel: "PlayStation Plus",
-    tierBadge: "✦ PS PLUS",
+    tierBadge: "PS PLUS",
     catalogSize: plusGames.length,
     description: "Monthly Games, Online Multiplayer, Exclusive Discounts & Cloud Storage"
   };
@@ -86,18 +174,8 @@ async function runFetchPipeline(rawToken, onProgress) {
     });
   };
 
-  let token = rawToken.trim().replace(/^["']|["']$/g, "").trim();
-  if (token.startsWith("{") && token.includes("npsso")) {
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed.npsso) token = parsed.npsso.trim();
-    } catch {}
-    const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
-    if (match) token = match[1].trim();
-  }
-
-  if (!token) throw new Error("Token is empty! Please paste your 64-character PlayStation NPSSO token.");
-  if (token.length < 64) throw new Error(`Wrong token: NPSSO token must be 64 characters (entered ${token.length}).`);
+  // SECURITY: Token has already been sanitized and validated by the caller
+  const token = rawToken;
 
   emitProgress({ step: 1, message: "Connecting to Sony PlayStation OAuth Gateway...", percent: 12 });
   const timeoutPromise = new Promise((_, reject) =>
@@ -299,11 +377,37 @@ async function runFetchPipeline(rawToken, onProgress) {
   return resultData;
 }
 
+// =========================================================================
+// SECURITY: Get client IP for rate limiting
+// =========================================================================
+function getClientIp(req) {
+  return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+         req.socket?.remoteAddress ||
+         "unknown";
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  const clientIp = getClientIp(req);
 
-  // CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // SECURITY: Set security headers on every response
+  setSecurityHeaders(res);
+
+  // SECURITY: Restrict CORS to same-origin only (no wildcard)
+  const origin = req.headers.origin;
+  if (origin) {
+    // Only allow same-origin requests
+    const host = req.headers.host;
+    const expectedOrigins = [
+      `http://${host}`,
+      `https://${host}`,
+      `http://localhost:${PORT}`,
+      `http://127.0.0.1:${PORT}`
+    ];
+    if (expectedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -320,7 +424,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const raw = fs.readFileSync(jsonPath, "utf8");
         const parsed = JSON.parse(raw);
-        // Ensure tier info is accurate (Deluxe)
+        // Ensure tier info is accurate
         if (!parsed.account.psPlusTier || parsed.account.psPlusTier === "PREMIUM" || parsed.account.psPlusTier.includes("Premium")) {
           const tierInfo = detectPsPlusTier(parsed.account.isPlusActive, parsed.games?.filter(g => g.isPsPlus) || []);
           parsed.account.psPlusTier = tierInfo.tier;
@@ -349,9 +453,33 @@ const server = http.createServer(async (req, res) => {
 
   // SSE Fetch Progress API
   if (url.pathname === "/api/fetch-stream" && req.method === "POST") {
+    // SECURITY: Rate limit fetch requests
+    if (isRateLimited(clientIp)) {
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Too many requests. Please wait before trying again." }));
+      return;
+    }
+
+    // SECURITY: Limit request body size (tokens should never exceed 1KB)
+    const MAX_BODY_SIZE = 1024;
     let body = "";
-    req.on("data", chunk => { body += chunk; });
+    let bodyTooLarge = false;
+
+    req.on("data", chunk => {
+      body += chunk;
+      if (body.length > MAX_BODY_SIZE) {
+        bodyTooLarge = true;
+        req.destroy();
+      }
+    });
+
     req.on("end", async () => {
+      if (bodyTooLarge) {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Request body too large." }));
+        return;
+      }
+
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -364,16 +492,7 @@ const server = http.createServer(async (req, res) => {
 
       try {
         const parsed = JSON.parse(body || "{}");
-        let token = (parsed.npsso || "").trim().replace(/^["']|["']$/g, "").trim();
-        if (token.startsWith("{") && token.includes("npsso")) {
-          try {
-            const inner = JSON.parse(token);
-            if (inner.npsso) token = inner.npsso.trim();
-          } catch {
-            const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
-            if (match) token = match[1].trim();
-          }
-        }
+        const token = sanitizeToken(parsed.npsso || "");
 
         if (!token) {
           sendEvent({ error: "Token is empty! Please paste your 64-character PlayStation NPSSO token." });
@@ -383,6 +502,13 @@ const server = http.createServer(async (req, res) => {
 
         if (token.length < 64) {
           sendEvent({ error: `Wrong token: NPSSO token must be 64 characters (entered ${token.length}).` });
+          res.end();
+          return;
+        }
+
+        // SECURITY: Validate token format
+        if (!isValidNpssoToken(token)) {
+          sendEvent({ error: "Invalid token format: NPSSO token must be exactly 64 alphanumeric characters." });
           res.end();
           return;
         }
@@ -441,8 +567,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Static File Serving
-  let filePath = path.join(PUBLIC_DIR, url.pathname === "/" ? "index.html" : url.pathname);
-  if (!filePath.startsWith(PUBLIC_DIR)) {
+  // SECURITY: Normalize path to prevent directory traversal
+  const requestedPath = decodeURIComponent(url.pathname);
+  const normalizedPath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
+  let filePath = path.join(PUBLIC_DIR, normalizedPath === "/" ? "index.html" : normalizedPath);
+
+  // SECURITY: Ensure the resolved path is within PUBLIC_DIR (prevent path traversal)
+  const resolvedPath = path.resolve(filePath);
+  const resolvedPublicDir = path.resolve(PUBLIC_DIR);
+  if (!resolvedPath.startsWith(resolvedPublicDir)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
@@ -479,6 +612,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`\n======================================================`);
   console.log(`psn checker running on port ${PORT}!`);
-  console.log(`👉 listening on: 0.0.0.0:${PORT}`);
+  console.log(`  listening on: 0.0.0.0:${PORT}`);
   console.log(`======================================================\n`);
 });

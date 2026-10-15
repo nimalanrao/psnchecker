@@ -2,12 +2,14 @@
  * PlayStation® Network — Library & PS Plus Checker
  * Clean Minimal OLED Architecture
  * Strictly zero emojis.
+ *
+ * SECURITY: No tokens stored in source code.
+ * All user input is sanitized before DOM insertion.
  */
 
 // Application State
 const state = {
   library: null,
-  currentToken: 'DydcDcBSYkHWCcXrRl7b3FB4SdRUX7rttokwz3rZ9FTXRn0lOWHeD3lKx9OekO2m',
   activeGameDetail: null,
   activeOledTab: 'ps4-owned',
   oledSearchQuery: ''
@@ -103,6 +105,57 @@ const dom = {
   toast: document.getElementById('toastNotification')
 };
 
+// =========================================================================
+// SECURITY: Strict HTML escaping for all user-supplied data
+// =========================================================================
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// SECURITY: Validate and sanitize URLs before inserting into DOM
+function sanitizeUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    // Only allow https URLs for images and links
+    if (parsed.protocol === 'https:' || parsed.protocol === 'data:') {
+      return url;
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+// SECURITY: Validate NPSSO token format (alphanumeric, 64 chars)
+function isValidNpssoFormat(token) {
+  return /^[A-Za-z0-9]{64}$/.test(token);
+}
+
+// SECURITY: Extract and validate token from user input
+function extractToken(rawInput) {
+  let token = (rawInput || '').trim().replace(/^["']|["']$/g, '').trim();
+
+  // Handle JSON format: {"npsso": "..."}
+  if (token.startsWith('{') && token.includes('npsso')) {
+    try {
+      const parsed = JSON.parse(token);
+      if (parsed.npsso) token = parsed.npsso.trim();
+    } catch {
+      const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
+      if (match) token = match[1].trim();
+    }
+  }
+
+  return token;
+}
+
 // SVG Placeholder generator for missing cover artwork (Clean, 0 emojis)
 function getArtworkFallback(title, platform) {
   const initials = (title || 'PS')
@@ -124,17 +177,6 @@ function showToast(msg) {
   setTimeout(() => {
     dom.toast.classList.add('hidden');
   }, 3200);
-}
-
-// Escape HTML utility
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 // Filter helper for subsearches
@@ -310,7 +352,7 @@ function renderMinimalOled() {
   if (!state.library) return;
   const { account, summary, games } = state.library;
 
-  // 1. Top Bar Preview
+  // 1. Top Bar Preview — use textContent (safe)
   if (dom.oledAccountOnlineId) {
     dom.oledAccountOnlineId.textContent = (account.onlineId || 'PLAYSTATION USER').toUpperCase();
   }
@@ -318,7 +360,7 @@ function renderMinimalOled() {
     dom.oledAccountTierBadge.textContent = account.isPlusActive ? 'PS PLUS' : 'NO PLUS';
   }
 
-  // 2. TAB PANE: PS+ Entitlements
+  // 2. TAB PANE: PS+ Entitlements — use textContent (safe)
   if (dom.oledPsPlusTier) {
     dom.oledPsPlusTier.textContent = account.isPlusActive ? 'PlayStation Plus' : 'No Active Membership';
   }
@@ -330,13 +372,16 @@ function renderMinimalOled() {
     dom.oledPsPlusCount.textContent = `${plusCount} Titles`;
   }
   if (dom.oledPsPlusAccount) {
-    dom.oledPsPlusAccount.textContent = account.onlineId || 'supposed-giant83';
+    dom.oledPsPlusAccount.textContent = account.onlineId || 'Unknown';
   }
   if (dom.oledPsPlusPerks) {
     dom.oledPsPlusPerks.textContent = account.psPlusDescription || 'Monthly Games, Online Multiplayer, Exclusive Discounts & Cloud Storage';
   }
   if (dom.oledPsPlusStatusTag) {
     dom.oledPsPlusStatusTag.textContent = account.isPlusActive ? 'ACTIVE' : 'INACTIVE';
+    dom.oledPsPlusStatusTag.className = account.isPlusActive
+      ? 'oled-status-tag status-active'
+      : 'oled-status-tag status-inactive';
   }
 
   // 3. Tab Badge Counts
@@ -360,35 +405,64 @@ function renderMinimalOled() {
   switchOledTab(state.activeOledTab);
 }
 
+// SECURITY: Game list rendering uses safe DOM APIs instead of innerHTML
 function renderOledGameList(container, gamesList) {
   if (!container) return;
+
+  // Clear existing content safely
+  container.innerHTML = '';
+
   if (gamesList.length === 0) {
-    container.innerHTML = '<div class="oled-empty-msg font-mono" style="padding: 12px; color: #555555; font-size: 0.78rem;">No matching titles found.</div>';
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'oled-empty-msg font-mono';
+    emptyMsg.style.cssText = 'padding: 12px; color: #555555; font-size: 0.78rem;';
+    emptyMsg.textContent = 'No matching titles found.';
+    container.appendChild(emptyMsg);
     return;
   }
 
-  container.innerHTML = gamesList.map(g => {
+  gamesList.forEach(g => {
     const fallback = getArtworkFallback(g.name, g.platform);
-    const coverUrl = g.imageUrl || fallback;
-    const playtimeStr = g.playtime ? `<span class="oled-game-playtime">${escapeHtml(g.playtime)}</span>` : '';
+    const coverUrl = sanitizeUrl(g.imageUrl) || fallback;
 
-    return `
-      <div class="oled-game-item" onclick="window.inspectGame('${escapeHtml(g.titleId)}')">
-        <img 
-          src="${escapeHtml(coverUrl)}" 
-          alt="${escapeHtml(g.name)}" 
-          class="oled-game-icon"
-          loading="lazy"
-          onerror="this.onerror=null; this.src='${escapeHtml(fallback)}';"
-        >
-        <div class="oled-game-main">
-          <div class="oled-game-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</div>
-          <div class="oled-game-sub font-mono">${escapeHtml(g.titleId || g.platform)} &bull; ${escapeHtml(g.platform)}</div>
-        </div>
-        ${playtimeStr}
-      </div>
-    `;
-  }).join('');
+    const item = document.createElement('div');
+    item.className = 'oled-game-item';
+    item.addEventListener('click', () => window.inspectGame(g.titleId));
+
+    const img = document.createElement('img');
+    img.src = coverUrl;
+    img.alt = g.name || 'Game';
+    img.className = 'oled-game-icon';
+    img.loading = 'lazy';
+    img.onerror = () => { img.onerror = null; img.src = fallback; };
+
+    const main = document.createElement('div');
+    main.className = 'oled-game-main';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'oled-game-name';
+    nameEl.title = g.name || '';
+    nameEl.textContent = g.name || 'Unknown Title';
+
+    const subEl = document.createElement('div');
+    subEl.className = 'oled-game-sub font-mono';
+    subEl.textContent = `${g.titleId || g.platform} \u2022 ${g.platform}`;
+
+    main.appendChild(nameEl);
+    main.appendChild(subEl);
+
+    item.appendChild(img);
+    item.appendChild(main);
+
+    if (g.playtime) {
+      const playtimeEl = document.createElement('span');
+      playtimeEl.className = 'oled-game-playtime';
+      playtimeEl.textContent = g.playtime;
+      item.appendChild(playtimeEl);
+    }
+
+    container.appendChild(item);
+  });
 }
 
 // Modal Closers — animated dismiss
@@ -409,30 +483,30 @@ window.inspectGame = function(titleId) {
   state.activeGameDetail = game;
 
   const fallbackUrl = getArtworkFallback(game.name, game.platform);
-  dom.modalCoverImg.src = game.imageUrl || fallbackUrl;
+  const safeImageUrl = sanitizeUrl(game.imageUrl) || fallbackUrl;
+  dom.modalCoverImg.src = safeImageUrl;
   dom.modalCoverImg.onerror = () => { dom.modalCoverImg.src = fallbackUrl; };
 
   dom.modalGameTitle.textContent = game.name;
   dom.modalPlatformBadge.textContent = game.platform;
   dom.modalPlatformBadge.className = `ps-platform-tag ${game.platform === 'PS5' ? 'tag-ps5' : 'tag-ps4'}`;
 
-  dom.modalLicenseBadge.textContent = game.isPsPlus ? '✦ PLAYSTATION PLUS CLAIM' : '✓ OWNED DIGITAL PURCHASE';
+  dom.modalLicenseBadge.textContent = game.isPsPlus ? 'PLAYSTATION PLUS CLAIM' : 'OWNED DIGITAL PURCHASE';
   dom.modalLicenseBadge.className = `ps-license-tag ${game.isPsPlus ? 'license-plus' : 'license-owned'}`;
 
   dom.modalTitleId.textContent = game.titleId || 'N/A';
   dom.modalEntitlementId.textContent = game.entitlementId || 'N/A';
   dom.modalPlaytime.textContent = game.playtime ? `${game.playtime} (${game.playCount || 1} sessions)` : 'Not recorded / Unplayed';
-  dom.modalPlayCount.textContent = game.playCount ? `${game.playCount} launches` : '—';
+  dom.modalPlayCount.textContent = game.playCount ? `${game.playCount} launches` : '\u2014';
   dom.modalLastPlayed.textContent = game.lastPlayed || 'Never / Not synced';
   dom.modalDownloadable.textContent = game.isDownloadable ? 'Active Digital Entitlement' : 'Inactive';
 
   if (game.productId) {
     dom.modalStoreLink.href = `https://store.playstation.com/en-us/product/${encodeURIComponent(game.productId)}`;
-    dom.modalStoreLink.style.display = 'inline-flex';
   } else {
     dom.modalStoreLink.href = `https://store.playstation.com/en-us/search/${encodeURIComponent(game.name)}`;
-    dom.modalStoreLink.style.display = 'inline-flex';
   }
+  dom.modalStoreLink.style.display = 'inline-flex';
 
   dom.gameDetailModal.classList.remove('hidden');
 };
@@ -556,12 +630,10 @@ function logOledError(errorMessage, badgeLabel = 'ERROR') {
     dom.oledProgressBar.style.width = '100%';
   }
 
-  // Append clear red error line into OLED log stream
+  // Append clear red error line into OLED log stream (safe DOM API)
   if (dom.oledLogsStream) {
     const errLine = document.createElement('div');
-    errLine.className = 'log-line text-red';
-    errLine.style.color = '#ef4444';
-    errLine.style.fontWeight = '600';
+    errLine.className = 'log-line log-line-error';
     errLine.textContent = `[ERROR] ${errorMessage}`;
     dom.oledLogsStream.appendChild(errLine);
     dom.oledLogsStream.scrollTop = dom.oledLogsStream.scrollHeight;
@@ -581,17 +653,8 @@ function logOledError(errorMessage, badgeLabel = 'ERROR') {
 
 // Streaming Sync Pipeline
 async function runStreamingSync(rawToken) {
-  // 1. Clean and normalize token (extract if pasted as JSON {"npsso": "..."})
-  let token = (rawToken || '').trim().replace(/^["']|["']$/g, '').trim();
-  if (token.startsWith('{') && token.includes('npsso')) {
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed.npsso) token = parsed.npsso.trim();
-    } catch {
-      const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
-      if (match) token = match[1].trim();
-    }
-  }
+  // SECURITY: Extract and validate token
+  const token = extractToken(rawToken);
 
   // RULE 1: If empty -> report error immediately
   if (!token) {
@@ -605,7 +668,11 @@ async function runStreamingSync(rawToken) {
     return;
   }
 
-  state.currentToken = token;
+  // SECURITY: Validate token format
+  if (!isValidNpssoFormat(token)) {
+    logOledError('Invalid token format: NPSSO token must be exactly 64 alphanumeric characters.', 'invalid format');
+    return;
+  }
 
   // Reset progress and badges to active state
   if (dom.oledLogsStatusBadge) {
@@ -651,7 +718,7 @@ async function runStreamingSync(rawToken) {
     const response = await fetch('/api/fetch-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ npsso: state.currentToken }),
+      body: JSON.stringify({ npsso: token }),
       signal: abortController.signal
     });
 
@@ -866,10 +933,6 @@ function bindEventListeners() {
         logOledError('Token is empty! Please paste your 64-character PlayStation NPSSO token.', 'token empty');
         return;
       }
-      if (raw.length < 64) {
-        logOledError(`Wrong token: NPSSO token must be 64 characters (entered ${raw.length}).`, 'wrong token');
-        return;
-      }
       runStreamingSync(raw);
     });
   }
@@ -882,10 +945,6 @@ function bindEventListeners() {
         const raw = dom.oledTokenInput.value.trim();
         if (!raw) {
           logOledError('Token is empty! Please paste your 64-character PlayStation NPSSO token.', 'token empty');
-          return;
-        }
-        if (raw.length < 64) {
-          logOledError(`Wrong token: NPSSO token must be 64 characters (entered ${raw.length}).`, 'wrong token');
           return;
         }
         runStreamingSync(raw);
@@ -973,7 +1032,6 @@ async function initApp() {
     const hasVisited = localStorage.getItem('psn_session_active') === 'true';
     if (hasVisited) {
       setOledLoggedInState();
-      if (dom.oledTokenInput) dom.oledTokenInput.value = state.currentToken;
     } else {
       setOledLoggedOutState();
     }

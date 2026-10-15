@@ -10,7 +10,26 @@ yarn-error.log*
 # environment & secrets
 .env
 .env.local
+.env.*.local
+
+# cached user data (contains personal PSN account information)
+psn-game-library.json
+psn-game-library.csv
+
+# test files with tokens (SECURITY: never commit tokens)
+test_*.mjs
+test_*.js
 
 # os files
 .DS_Store
 Thumbs.db
+
+# editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# agents & ai
+.agents/
+.gemini/

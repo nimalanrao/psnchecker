@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PlayStation Network library inspector — view your digital purchases, PS Plus entitlements, and playtime statistics.">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>PlayStation® Network — Library &amp; PS Plus Hub</title>
   <!-- Google Sans & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;700&family=Product+Sans:wght@400;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=5.0">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
 </head>
@@ -38,8 +40,8 @@
         </div>
         <div class="oled-top-right hidden" id="oledTopRight">
           <div class="oled-account-preview" id="oledAccountPreview">
-            <span id="oledAccountOnlineId" class="oled-online-id">supposed-giant83</span>
-            <span id="oledAccountTierBadge" class="oled-tier-badge">PS PLUS</span>
+            <span id="oledAccountOnlineId" class="oled-online-id"></span>
+            <span id="oledAccountTierBadge" class="oled-tier-badge"></span>
           </div>
           <button type="button" id="btnOledLogout" class="oled-btn-logout">log out</button>
         </div>
@@ -100,7 +102,7 @@
                     <span class="step-idx">03</span>
                     <div>
                       <strong>Copy 64-character token</strong>
-                      <div class="oled-code font-mono">{"npsso": "DydcDcBSYkHWCcXrRl7b3FB4SdRUX7rttokwz3rZ9FTXRn0lOWHeD3lKx9OekO2m"}</div>
+                      <div class="oled-code font-mono">{"npsso": "YourNpssoToken64CharactersLongAlphanumericStringFromSonySSOCookie"}</div>
                       <p>Copy only the token inside quotes and paste it above.</p>
                     </div>
                   </div>
@@ -151,16 +153,16 @@
                 PS PLUS
               </button>
               <button type="button" class="oled-tab-btn active" data-oled-tab="ps4-owned" id="tabOledPs4Owned">
-                PS4 OWNED <span class="tab-cnt" id="oledCountPs4Owned">102</span>
+                PS4 OWNED <span class="tab-cnt" id="oledCountPs4Owned">0</span>
               </button>
               <button type="button" class="oled-tab-btn" data-oled-tab="ps5-owned" id="tabOledPs5Owned">
-                PS5 OWNED <span class="tab-cnt" id="oledCountPs5Owned">25</span>
+                PS5 OWNED <span class="tab-cnt" id="oledCountPs5Owned">0</span>
               </button>
               <button type="button" class="oled-tab-btn" data-oled-tab="ps4-plus" id="tabOledPs4Plus">
-                PS4 PS+ <span class="tab-cnt" id="oledCountPs4Plus">73</span>
+                PS4 PS+ <span class="tab-cnt" id="oledCountPs4Plus">0</span>
               </button>
               <button type="button" class="oled-tab-btn" data-oled-tab="ps5-plus" id="tabOledPs5Plus">
-                PS5 PS+ <span class="tab-cnt" id="oledCountPs5Plus">59</span>
+                PS5 PS+ <span class="tab-cnt" id="oledCountPs5Plus">0</span>
               </button>
             </nav>
 
@@ -180,19 +182,19 @@
               <div class="oled-info-grid">
                 <div class="info-cell">
                   <span class="cell-label">MEMBERSHIP</span>
-                  <span class="cell-value" id="oledPsPlusTier">PlayStation Plus</span>
+                  <span class="cell-value" id="oledPsPlusTier">Loading...</span>
                 </div>
                 <div class="info-cell">
                   <span class="cell-label">STATUS</span>
-                  <span class="cell-value" id="oledPsPlusStatus">Active</span>
+                  <span class="cell-value" id="oledPsPlusStatus">Loading...</span>
                 </div>
                 <div class="info-cell">
                   <span class="cell-label">TOTAL PS+ CLAIMS</span>
-                  <span class="cell-value" id="oledPsPlusCount">132 Titles</span>
+                  <span class="cell-value" id="oledPsPlusCount">0 Titles</span>
                 </div>
                 <div class="info-cell">
                   <span class="cell-label">ACCOUNT ONLINE ID</span>
-                  <span class="cell-value" id="oledPsPlusAccount">supposed-giant83</span>
+                  <span class="cell-value" id="oledPsPlusAccount">Loading...</span>
                 </div>
                 <div class="info-cell full-width">
                   <span class="cell-label">BENEFITS</span>
@@ -363,6 +365,6 @@
   <!-- Toast Notification -->
   <div id="toastNotification" class="ps-toast hidden"></div>
 
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>

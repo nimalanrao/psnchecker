@@ -2989,6 +2989,72 @@ body.mode-minimal-oled #syncModal .btn-ps-subtle {
 
 
 /* ==========================================================================
+   DESIGN CONSISTENCY: Missing Styles (Status Tags, Error Lines, Animations)
+   ========================================================================== */
+
+/* Status Tag (PS Plus Active/Inactive) */
+.oled-status-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  border: 1px solid #333333;
+  background: #111111;
+  color: #aaaaaa;
+  transition: all 0.2s ease;
+}
+
+.oled-status-tag.status-active {
+  background: #082211;
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.oled-status-tag.status-inactive {
+  background: #2a0808;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Error Log Lines — consistent red styling */
+.log-line-error {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+/* Modal Hero Floating Badges container */
+.modal-hero-floating-badges {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+/* Fade-in animation for tab panes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Empty message styling consistency */
+.oled-empty-msg {
+  padding: 12px;
+  color: #555555;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* ==========================================================================
    PERSISTENT AUTHOR LINK (BOTTOM-LEFT): icon github | @nimalanrao
    ========================================================================== */
 .oled-floating-author-wrap {
