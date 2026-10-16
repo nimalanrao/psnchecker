@@ -1,4 +1,6 @@
-// PlayStation Network — Library & PS Plus Inspector
+/* ==========================================================================
+   SECTION 1: APPLICATION STATE & DOM ELEMENT CACHE
+   ========================================================================== */
 const state = {
   library: null,
   activeTab: "ps4-owned",
@@ -11,9 +13,13 @@ const $ = (id) => document.getElementById(id);
 const els = {
   app: $("minimalOledApp"),
   topRight: $("oledTopRight"),
+  accountPreview: $("oledAccountPreview"),
   onlineId: $("oledAccountOnlineId"),
   tierBadge: $("oledAccountTierBadge"),
   btnLogout: $("btnOledLogout"),
+  btnOpenInfo: $("btnOpenInfo"),
+  infoModal: $("infoModal"),
+  btnInfoModalClose: $("btnInfoModalClose"),
 
   controlSection: $("oledControlSection"),
   tokenInput: $("oledTokenInput"),
@@ -92,6 +98,9 @@ const els = {
   preloader: $("sitePreloader")
 };
 
+/* ==========================================================================
+   SECTION 2: SANITIZATION & ARTWORK FALLBACK UTILITIES
+   ========================================================================== */
 function showToast(text, duration = 3000) {
   if (!els.toast) return;
   els.toast.textContent = text;
@@ -140,19 +149,24 @@ function setViewMode(isLoggedIn) {
     els.app?.classList.remove("is-centered");
     els.controlSection?.classList.add("hidden");
     els.gamesSection?.classList.remove("hidden");
-    els.topRight?.classList.remove("hidden");
+    els.accountPreview?.classList.remove("hidden");
+    els.btnLogout?.classList.remove("hidden");
     els.footer?.classList.remove("hidden");
   } else {
     localStorage.removeItem("psn_session_active");
     els.app?.classList.add("is-centered");
     els.controlSection?.classList.remove("hidden");
     els.gamesSection?.classList.add("hidden");
-    els.topRight?.classList.add("hidden");
+    els.accountPreview?.classList.add("hidden");
+    els.btnLogout?.classList.add("hidden");
     els.footer?.classList.add("hidden");
     if (els.tokenInput) els.tokenInput.value = "";
   }
 }
 
+/* ==========================================================================
+   SECTION 3: ACCORDION DRAWERS & PROGRESS FEEDBACK
+   ========================================================================== */
 function toggleDrawer(drawer, button) {
   if (!drawer || !button) return;
   const isOpen = drawer.classList.toggle("open");
@@ -193,6 +207,9 @@ function logError(message, badgeText = "ERROR") {
   showToast(message);
 }
 
+/* ==========================================================================
+   SECTION 4: GAME LIST RENDERING & SQUASH-PROOF ROW CREATION
+   ========================================================================== */
 function filterList(games, query) {
   if (!query) return games;
   const q = query.toLowerCase();
@@ -223,7 +240,13 @@ function renderGameList(container, list) {
 
     const item = document.createElement("div");
     item.className = "oled-game-item";
-    item.addEventListener("click", () => inspectGame(g.titleId));
+    item.addEventListener("click", () => {
+      item.classList.add("item-tapped");
+      setTimeout(() => {
+        item.classList.remove("item-tapped");
+        inspectGame(g.titleId);
+      }, 90);
+    });
 
     const img = document.createElement("img");
     img.src = coverUrl;
@@ -261,6 +284,9 @@ function renderGameList(container, list) {
   }
 }
 
+/* ==========================================================================
+   SECTION 5: TAB NAVIGATION & STATS DASHBOARD
+   ========================================================================== */
 function switchTab(tabKey) {
   state.activeTab = tabKey;
 
@@ -342,6 +368,9 @@ function renderDashboard() {
   switchTab(state.activeTab);
 }
 
+/* ==========================================================================
+   SECTION 6: MODAL SYSTEM (INSPECTOR, EXPORT, ABOUT & FAQ)
+   ========================================================================== */
 function inspectGame(titleId) {
   const game = state.library?.games?.find((g) => g.titleId === titleId);
   if (!game) return;
@@ -440,6 +469,9 @@ async function copySimpleList(withPlus) {
   closeModal(els.copyModal);
 }
 
+/* ==========================================================================
+   SECTION 7: REAL-TIME SSE STREAM LISTENER
+   ========================================================================== */
 async function startSync(rawToken) {
   const token = extractToken(rawToken);
 
@@ -560,6 +592,9 @@ async function startSync(rawToken) {
   }
 }
 
+/* ==========================================================================
+   SECTION 8: EVENT LISTENERS & LIFECYCLE HYDRATION
+   ========================================================================== */
 function bindEvents() {
   els.btnHowTo?.addEventListener("click", () => toggleDrawer(els.tutorialDrawer, els.btnHowTo));
   els.btnToggleLogs?.addEventListener("click", () => toggleDrawer(els.logsDrawer, els.btnToggleLogs));
@@ -621,10 +656,19 @@ function bindEvents() {
     if (e.target === els.copyModal) closeModal(els.copyModal);
   });
 
+  els.btnOpenInfo?.addEventListener("click", () => {
+    els.infoModal?.classList.remove("hidden");
+  });
+  els.btnInfoModalClose?.addEventListener("click", () => closeModal(els.infoModal));
+  els.infoModal?.addEventListener("click", (e) => {
+    if (e.target === els.infoModal) closeModal(els.infoModal);
+  });
+
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeModal(els.detailModal);
       closeModal(els.copyModal);
+      closeModal(els.infoModal);
     }
   });
 }

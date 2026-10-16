@@ -1,3 +1,6 @@
+/* ==========================================================================
+   SECTION 1: IMPORTS & SERVER CONSTANTS
+   ========================================================================== */
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -25,6 +28,9 @@ const MIME_TYPES = {
   ".ico": "image/x-icon"
 };
 
+/* ==========================================================================
+   SECTION 2: SECURITY, RATE LIMITING & DEFENSIVE HEADERS
+   ========================================================================== */
 const rateLimits = new Map();
 const RATE_WINDOW = 60 * 1000;
 const RATE_MAX = 5;
@@ -85,6 +91,9 @@ function applySecurityHeaders(res) {
   );
 }
 
+/* ==========================================================================
+   SECTION 3: STRING SANITIZATION & PARSING UTILITIES
+   ========================================================================== */
 function parseDuration(isoDuration) {
   if (!isoDuration || typeof isoDuration !== "string") return null;
   const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?/);
@@ -101,6 +110,9 @@ function escapeCsv(val) {
   return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
+/* ==========================================================================
+   SECTION 4: SONY PSN API ENGINE & PIPELINE
+   ========================================================================== */
 async function runFetchPipeline(token, onProgress) {
   const startTime = Date.now();
 
@@ -312,6 +324,9 @@ async function runFetchPipeline(token, onProgress) {
   return resultData;
 }
 
+/* ==========================================================================
+   SECTION 5: HTTP ROUTER, SSE STREAM DISPATCHER & ASSETS
+   ========================================================================== */
 function getClientIp(req) {
   return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "127.0.0.1";
 }
@@ -474,6 +489,10 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+/* ==========================================================================
+   SECTION 6: SERVER INITIALIZATION & LIFECYCLE
+   ========================================================================== */
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+

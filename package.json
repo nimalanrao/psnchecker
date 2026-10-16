@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.mjs",
     "web": "node server.mjs",
-    "cli": "node fetcher.mjs"
+    "cli": "node fetcher.mjs",
+    "build": "node -c server.mjs fetcher.mjs",
+    "release": "node -c server.mjs fetcher.mjs"
   },
   "dependencies": {
     "psn-api": "^2.18.1"

@@ -29,13 +29,21 @@
       <header class="oled-top-bar">
         <div class="oled-brand-box">
           <span class="oled-brand-title">psn checker</span>
+          <span class="oled-release-badge font-mono">v1.0</span>
         </div>
-        <div class="oled-top-right hidden" id="oledTopRight">
-          <div class="oled-account-preview" id="oledAccountPreview">
+        <div class="oled-top-right" id="oledTopRight">
+          <div class="oled-account-preview hidden" id="oledAccountPreview">
             <span id="oledAccountOnlineId" class="oled-online-id"></span>
             <span id="oledAccountTierBadge" class="oled-tier-badge"></span>
           </div>
-          <button type="button" id="btnOledLogout" class="oled-btn-logout">log out</button>
+          <button type="button" id="btnOledLogout" class="oled-btn-logout hidden">log out</button>
+          <button type="button" id="btnOpenInfo" class="oled-btn-info" title="About &amp; FAQ" aria-label="About &amp; FAQ">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -218,21 +226,25 @@
     </div>
   </main>
 
+  <!-- Game Details Modal -->
   <div id="gameDetailModal" class="ps-modal-backdrop hidden">
-    <div class="ps-modal-dialog">
+    <div class="ps-modal-dialog game-modal-dialog">
       <button class="ps-modal-close" id="btnModalClose" title="Close (Esc)">&times;</button>
       
-      <div class="modal-cover-hero">
-        <img id="modalCoverImg" src="" alt="Cover" class="modal-hero-artwork">
-        <div class="modal-hero-gradient"></div>
+      <div class="modal-game-header">
+        <div class="modal-cover-square-box">
+          <img id="modalCoverImg" src="" alt="Cover" class="modal-square-artwork">
+        </div>
+        <div class="modal-header-meta">
+          <div class="modal-title-row">
+            <span id="modalPlatformBadge" class="ps-platform-tag">PS5</span>
+            <span id="modalLicenseBadge" class="ps-license-tag">OWNED</span>
+          </div>
+          <h2 id="modalGameTitle" class="modal-game-name">Game Title</h2>
+        </div>
       </div>
 
       <div class="modal-dialog-body">
-        <div class="modal-title-row">
-          <span id="modalPlatformBadge" class="ps-platform-tag">PS5</span>
-          <span id="modalLicenseBadge" class="ps-license-tag">OWNED</span>
-        </div>
-        <h2 id="modalGameTitle" class="modal-game-name">Game Title</h2>
 
         <div class="modal-specs-grid">
           <div class="spec-cell">
@@ -273,6 +285,7 @@
     </div>
   </div>
 
+  <!-- Copy Simple List Modal -->
   <div id="copySimpleModal" class="ps-modal-backdrop hidden">
     <div class="ps-modal-dialog copy-modal-dialog">
       <button class="ps-modal-close" id="btnCopyModalClose" title="Close (Esc)">&times;</button>
@@ -313,6 +326,102 @@
     </div>
   </div>
 
+  <!-- About & FAQ Modal -->
+  <div id="infoModal" class="ps-modal-backdrop hidden">
+    <div class="ps-modal-dialog info-modal-dialog">
+      <button class="ps-modal-close" id="btnInfoModalClose" title="Close (Esc)">&times;</button>
+      
+      <div class="info-modal-header">
+        <div class="info-modal-tag-row">
+          <span class="info-badge font-mono">RELEASE BUILD</span>
+          <span class="info-badge badge-version font-mono">v1.0</span>
+        </div>
+        <h2 class="info-modal-title">psn checker</h2>
+        <p class="info-modal-subtitle">Minimal, open-source PlayStation Network digital library &amp; entitlement analyzer.</p>
+      </div>
+
+      <div class="info-author-card">
+        <img src="author-avatar.png" alt="Nimalan Rao" class="info-author-avatar-img">
+        <div class="info-author-details">
+          <div class="info-author-name">Built by Nimalan Rao</div>
+          <a href="https://github.com/nimalanrao" target="_blank" rel="noopener noreferrer" class="info-author-link">
+            <svg class="author-github-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            <span>@nimalanrao on GitHub &nearr;</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="info-content-scroll">
+        <div class="info-section">
+          <h3 class="info-section-heading">How to Use</h3>
+          <div class="info-steps-list">
+            <div class="info-step-item">
+              <span class="info-step-num font-mono">01</span>
+              <div>
+                <strong>Sign in to PlayStation.com</strong>
+                <p>Log in with your normal PlayStation account in any browser tab.</p>
+              </div>
+            </div>
+            <div class="info-step-item">
+              <span class="info-step-num font-mono">02</span>
+              <div>
+                <strong>Get your session token</strong>
+                <p>In the same browser, open <a href="https://ca.account.sony.com/api/v1/ssocookie" target="_blank" rel="noopener noreferrer" class="oled-link">ca.account.sony.com/api/v1/ssocookie &nearr;</a></p>
+              </div>
+            </div>
+            <div class="info-step-item">
+              <span class="info-step-num font-mono">03</span>
+              <div>
+                <strong>Copy the 64-character NPSSO token</strong>
+                <p>Copy only the string inside <code>{"npsso": "..."}</code>.</p>
+              </div>
+            </div>
+            <div class="info-step-item">
+              <span class="info-step-num font-mono">04</span>
+              <div>
+                <strong>Paste &amp; Fetch</strong>
+                <p>Paste the token into the field and click <strong>CONNECT &amp; FETCH</strong>. Your games will be organized into PS5/PS4 owned titles and PS Plus claims.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h3 class="info-section-heading">Frequently Asked Questions</h3>
+          <div class="faq-list">
+            <div class="faq-item">
+              <div class="faq-question">Is this safe to use?</div>
+              <div class="faq-answer">
+                Yes, 100%. This tool is completely open source and runs entirely on your local machine. You never enter your PlayStation password. Your NPSSO token is only transmitted directly to Sony's official OAuth servers over encrypted HTTPS, and is never logged, stored on external servers, or shared with third parties.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question">How does it work?</div>
+              <div class="faq-answer">
+                It uses Sony's official OAuth 2.0 gateway. The 64-character NPSSO token exchanges for a temporary access code, which generates a short-lived bearer token. It then queries Sony's official GraphQL catalog (<code>getPurchasedGames</code>) and activity history APIs to separate perpetual digital purchases from subscription-based PS Plus claims.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question">Can my PlayStation account get banned?</div>
+              <div class="faq-answer">
+                No. The requests made are standard, read-only API calls—the exact same requests made by the official PlayStation Mobile App and the web store to display your library.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question">Where is my library data saved?</div>
+              <div class="faq-answer">
+                All records are saved strictly on your local disk as <code>psn-game-library.json</code> and <code>psn-game-library.csv</code>. No telemetry or external cloud storage is used.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <aside class="oled-floating-author-wrap">
     <a 
       href="https://github.com/nimalanrao" 
@@ -322,10 +431,7 @@
       id="authorGithubLink" 
       title="GitHub: @nimalanrao"
     >
-      <svg class="author-github-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-      </svg>
-      <span class="author-divider">|</span>
+      <img src="author-avatar.png" alt="Nimalan Rao" class="author-floating-avatar">
       <span class="author-handle">@nimalanrao</span>
     </a>
   </aside>
