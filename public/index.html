@@ -3,20 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PlayStation Network library inspector — view your digital purchases, PS Plus entitlements, and playtime statistics.">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <title>PlayStation® Network — Library &amp; PS Plus Hub</title>
-  <!-- Google Sans & JetBrains Mono Fonts -->
+  <meta name="description" content="PlayStation Network library inspector — view digital purchases, PS Plus entitlements, and playtime stats.">
+  <title>PlayStation Network — Library Inspector</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;700&family=Product+Sans:wght@400;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5.0">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="favicon.png">
 </head>
-<body class="mode-minimal-oled">
+<body>
 
-  <!-- Ultra-Clean Website Preloader -->
   <div id="sitePreloader" class="site-preloader">
     <div class="site-preloader-content">
       <div class="site-preloader-brand">psn checker</div>
@@ -27,13 +23,9 @@
     </div>
   </div>
 
-  <!-- =========================================================================
-       MINIMAL OLED APPLICATION (Full Black Background, Sharp 0-Radius Rectangles)
-       ========================================================================= -->
   <main id="minimalOledApp" class="oled-root is-centered">
     <div class="oled-container">
       
-      <!-- Top Brand Header: "psn checker" & Log Out on Top Right -->
       <header class="oled-top-bar">
         <div class="oled-brand-box">
           <span class="oled-brand-title">psn checker</span>
@@ -47,11 +39,9 @@
         </div>
       </header>
 
-      <!-- SECTION 1: TOKEN & LOGS (SUPER CLEAN ONE BOX) -->
-      <section class="oled-section oled-control-section" id="oledControlSection">
-        <div class="oled-box oled-unified-card">
+      <section class="oled-control-section" id="oledControlSection">
+        <div class="oled-unified-card">
           
-          <!-- Token Input Group -->
           <div class="oled-token-group">
             <label for="oledTokenInput" class="oled-label">enter token:</label>
             <div class="oled-input-row">
@@ -70,7 +60,6 @@
               </button>
             </div>
 
-            <!-- Sub row: "how to receive v" with animation -->
             <div class="oled-token-sub-row">
               <button type="button" id="btnOledHowToReceive" class="oled-trigger-btn" aria-expanded="false">
                 <span>how to receive</span>
@@ -78,7 +67,6 @@
               </button>
             </div>
 
-            <!-- Animated Unfolding Drawer for Tutorial -->
             <div id="oledTutorialDrawer" class="oled-drawer-animated">
               <div class="oled-drawer-content">
                 <div class="oled-tutorial-card">
@@ -86,14 +74,14 @@
                     <span class="step-idx">01</span>
                     <div>
                       <strong>Sign in to PlayStation.com</strong>
-                      <p>Open your PlayStation account in your normal browser tab.</p>
+                      <p>Open your PlayStation account in your browser.</p>
                       <a href="https://www.playstation.com" target="_blank" rel="noopener noreferrer" class="oled-link">Open PlayStation.com &nearr;</a>
                     </div>
                   </div>
                   <div class="oled-tutorial-step">
                     <span class="step-idx">02</span>
                     <div>
-                      <strong>Open Sony's SSO Cookie Endpoint</strong>
+                      <strong>Open Sony SSO Cookie Endpoint</strong>
                       <p>In the same browser session, open:</p>
                       <a href="https://ca.account.sony.com/api/v1/ssocookie" target="_blank" rel="noopener noreferrer" class="oled-link">ca.account.sony.com/api/v1/ssocookie &nearr;</a>
                     </div>
@@ -102,8 +90,8 @@
                     <span class="step-idx">03</span>
                     <div>
                       <strong>Copy 64-character token</strong>
-                      <div class="oled-code font-mono">{"npsso": "YourNpssoToken64CharactersLongAlphanumericStringFromSonySSOCookie"}</div>
-                      <p>Copy only the token inside quotes and paste it above.</p>
+                      <div class="oled-code font-mono">{"npsso": "your-64-character-token-here"}</div>
+                      <p>Copy only the token string inside the quotes and paste it above.</p>
                     </div>
                   </div>
                 </div>
@@ -111,10 +99,8 @@
             </div>
           </div>
 
-          <!-- Divider inside unified box -->
           <div class="oled-box-divider"></div>
 
-          <!-- Logs Accordion (Inside same box) -->
           <div class="oled-logs-group">
             <button type="button" id="btnOledToggleLogs" class="oled-accordion-head" aria-expanded="false">
               <div class="oled-accordion-title">
@@ -133,7 +119,7 @@
                   <div id="oledProgressBar" class="oled-progress-bar" style="width: 0%"></div>
                 </div>
                 <div class="oled-log-stream font-mono" id="oledLogsStream">
-                  <div class="log-line">[SYSTEM] Ready. Connect token or view synced library below.</div>
+                  <div class="log-line">Ready. Enter token above to scan your library.</div>
                 </div>
               </div>
             </div>
@@ -142,11 +128,9 @@
         </div>
       </section>
 
-      <!-- SECTION 2: GAMES & LIBRARY SECTION (DEDICATED, PS+ HIDDEN UNDER TAB) -->
-      <section class="oled-section oled-games-section hidden" id="oledGamesSection">
-        <div class="oled-box oled-library-box">
+      <section class="oled-games-section hidden" id="oledGamesSection">
+        <div class="oled-library-box">
           
-          <!-- Library Header with Tabs -->
           <div class="oled-library-header">
             <nav class="oled-tabs-nav" id="oledTabsNav">
               <button type="button" class="oled-tab-btn" data-oled-tab="psplus" id="tabOledPsPlus">
@@ -166,17 +150,15 @@
               </button>
             </nav>
 
-            <!-- Search Filter for Games -->
             <div class="oled-search-container" id="oledSearchContainer">
               <input type="text" class="oled-subsearch font-mono" id="oledGameSearch" placeholder="filter games in tab...">
             </div>
           </div>
 
-          <!-- TAB PANE 1: PS PLUS (Hidden under tab!) -->
           <div class="oled-tab-pane hidden" id="paneOledPsPlus">
             <div class="oled-psplus-pane-wrap">
               <div class="oled-pane-title-row">
-                <h3 class="oled-pane-heading">PlayStation Plus Entitlements</h3>
+                <h3 class="oled-pane-heading">PlayStation Plus</h3>
                 <span class="oled-status-tag" id="oledPsPlusStatusTag">ACTIVE</span>
               </div>
               <div class="oled-info-grid">
@@ -209,22 +191,18 @@
             </div>
           </div>
 
-          <!-- TAB PANE 2: PS4 OWNED -->
           <div class="oled-tab-pane" id="paneOledPs4Owned">
             <div class="oled-games-list scrollable-games" id="listPs4Owned"></div>
           </div>
 
-          <!-- TAB PANE 3: PS5 OWNED -->
           <div class="oled-tab-pane hidden" id="paneOledPs5Owned">
             <div class="oled-games-list scrollable-games" id="listPs5Owned"></div>
           </div>
 
-          <!-- TAB PANE 4: PS4 PS+ -->
           <div class="oled-tab-pane hidden" id="paneOledPs4Plus">
             <div class="oled-games-list scrollable-games" id="listPs4Plus"></div>
           </div>
 
-          <!-- TAB PANE 5: PS5 PS+ -->
           <div class="oled-tab-pane hidden" id="paneOledPs5Plus">
             <div class="oled-games-list scrollable-games" id="listPs5Plus"></div>
           </div>
@@ -232,26 +210,21 @@
         </div>
       </section>
 
-      <!-- Actions in Minimal OLED Mode -->
       <footer class="oled-footer hidden">
-        <button type="button" id="btnOpenCopySimple" class="oled-btn oled-btn-outline">COPY SIMPLE LIST</button>
-        <a href="/api/download/csv" class="oled-btn oled-btn-outline">EXPORT CSV (psn-game-library.csv)</a>
+        <button type="button" id="btnOpenCopySimple" class="oled-btn-outline">COPY SIMPLE LIST</button>
+        <a href="/api/download/csv" class="oled-btn-outline">EXPORT CSV</a>
       </footer>
 
     </div>
   </main>
 
-  <!-- =========================================================================
-       MODAL: GAME DETAILS INSPECTOR
-       ========================================================================= -->
   <div id="gameDetailModal" class="ps-modal-backdrop hidden">
-    <div class="ps-modal-dialog liquid-glass blur-fade">
+    <div class="ps-modal-dialog">
       <button class="ps-modal-close" id="btnModalClose" title="Close (Esc)">&times;</button>
       
       <div class="modal-cover-hero">
         <img id="modalCoverImg" src="" alt="Cover" class="modal-hero-artwork">
         <div class="modal-hero-gradient"></div>
-        <div class="modal-hero-floating-badges" id="modalHeroBadges"></div>
       </div>
 
       <div class="modal-dialog-body">
@@ -284,7 +257,7 @@
           </div>
           <div class="spec-cell">
             <span class="spec-label">License Status</span>
-            <span id="modalDownloadable" class="spec-val text-emerald">Active Entitlement</span>
+            <span id="modalDownloadable" class="spec-val">Active Entitlement</span>
           </div>
         </div>
 
@@ -293,17 +266,13 @@
             Copy Details
           </button>
           <a id="modalStoreLink" href="https://store.playstation.com" target="_blank" rel="noopener noreferrer" class="btn btn-ps-primary">
-            View on PlayStation Store &nearr;
+            View on Store &nearr;
           </a>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- =========================================================================
-       MODAL: COPY SIMPLE LIST (TELEGRAM / MESSAGING EXPORT)
-       ========================================================================= -->
   <div id="copySimpleModal" class="ps-modal-backdrop hidden">
     <div class="ps-modal-dialog copy-modal-dialog">
       <button class="ps-modal-close" id="btnCopyModalClose" title="Close (Esc)">&times;</button>
@@ -339,12 +308,11 @@
       </div>
 
       <div class="copy-modal-hint font-mono">
-        format: PS4 &amp; PS5 sections &bull; sorted A-Z &bull; no playtime or extras
+        format: PS4 &amp; PS5 sections &bull; sorted A-Z &bull; clean text
       </div>
     </div>
   </div>
 
-  <!-- Persistent Floating Bottom-Left Author Link -->
   <aside class="oled-floating-author-wrap">
     <a 
       href="https://github.com/nimalanrao" 
@@ -362,9 +330,8 @@
     </a>
   </aside>
 
-  <!-- Toast Notification -->
   <div id="toastNotification" class="ps-toast hidden"></div>
 
-  <script src="app.js?v=5.0"></script>
+  <script src="app.js"></script>
 </body>
 </html>

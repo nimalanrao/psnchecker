@@ -1,1055 +1,656 @@
-/**
- * PlayStation® Network — Library & PS Plus Checker
- * Clean Minimal OLED Architecture
- * Strictly zero emojis.
- *
- * SECURITY: No tokens stored in source code.
- * All user input is sanitized before DOM insertion.
- */
-
-// Application State
+// PlayStation Network — Library & PS Plus Inspector
 const state = {
   library: null,
-  activeGameDetail: null,
-  activeOledTab: 'ps4-owned',
-  oledSearchQuery: ''
+  activeTab: "ps4-owned",
+  searchQuery: "",
+  activeGame: null
 };
 
-// DOM Cache
-const dom = {
-  // App Container
-  minimalOledApp: document.getElementById('minimalOledApp'),
+const $ = (id) => document.getElementById(id);
 
-  // Header & Profile Preview
-  oledTopRight: document.getElementById('oledTopRight'),
-  oledAccountPreview: document.getElementById('oledAccountPreview'),
-  oledAccountOnlineId: document.getElementById('oledAccountOnlineId'),
-  oledAccountTierBadge: document.getElementById('oledAccountTierBadge'),
-  btnOledLogout: document.getElementById('btnOledLogout'),
+const els = {
+  app: $("minimalOledApp"),
+  topRight: $("oledTopRight"),
+  onlineId: $("oledAccountOnlineId"),
+  tierBadge: $("oledAccountTierBadge"),
+  btnLogout: $("btnOledLogout"),
 
-  // Token Control Section
-  oledControlSection: document.getElementById('oledControlSection'),
-  oledTokenInput: document.getElementById('oledTokenInput'),
-  btnOledTogglePass: document.getElementById('btnOledTogglePass'),
-  btnOledFetch: document.getElementById('btnOledFetch'),
-  btnOledHowToReceive: document.getElementById('btnOledHowToReceive'),
-  oledTutorialDrawer: document.getElementById('oledTutorialDrawer'),
+  controlSection: $("oledControlSection"),
+  tokenInput: $("oledTokenInput"),
+  btnTogglePass: $("btnOledTogglePass"),
+  btnFetch: $("btnOledFetch"),
+  btnHowTo: $("btnOledHowToReceive"),
+  tutorialDrawer: $("oledTutorialDrawer"),
 
-  // Logs Accordion
-  btnOledToggleLogs: document.getElementById('btnOledToggleLogs'),
-  oledLogsDrawer: document.getElementById('oledLogsDrawer'),
-  oledLogsStatusBadge: document.getElementById('oledLogsStatusBadge'),
-  oledLogsEtaText: document.getElementById('oledLogsEtaText'),
-  oledProgressBar: document.getElementById('oledProgressBar'),
-  oledLogsStream: document.getElementById('oledLogsStream'),
+  btnToggleLogs: $("btnOledToggleLogs"),
+  logsDrawer: $("oledLogsDrawer"),
+  logsBadge: $("oledLogsStatusBadge"),
+  logsEta: $("oledLogsEtaText"),
+  progressBar: $("oledProgressBar"),
+  logsStream: $("oledLogsStream"),
 
-  // Games & Tabs Section
-  oledGamesSection: document.getElementById('oledGamesSection'),
-  oledTabsNav: document.getElementById('oledTabsNav'),
-  oledSearchContainer: document.getElementById('oledSearchContainer'),
-  oledGameSearch: document.getElementById('oledGameSearch'),
-  paneOledPsPlus: document.getElementById('paneOledPsPlus'),
-  paneOledPs4Owned: document.getElementById('paneOledPs4Owned'),
-  paneOledPs5Owned: document.getElementById('paneOledPs5Owned'),
-  paneOledPs4Plus: document.getElementById('paneOledPs4Plus'),
-  paneOledPs5Plus: document.getElementById('paneOledPs5Plus'),
-  tabOledPsPlus: document.getElementById('tabOledPsPlus'),
-  tabOledPs4Owned: document.getElementById('tabOledPs4Owned'),
-  tabOledPs5Owned: document.getElementById('tabOledPs5Owned'),
-  tabOledPs4Plus: document.getElementById('tabOledPs4Plus'),
-  tabOledPs5Plus: document.getElementById('tabOledPs5Plus'),
-  oledFooter: document.querySelector('.oled-footer'),
+  gamesSection: $("oledGamesSection"),
+  tabsNav: $("oledTabsNav"),
+  searchContainer: $("oledSearchContainer"),
+  gameSearch: $("oledGameSearch"),
 
-  // Tab Content & Counts
-  oledPsPlusTier: document.getElementById('oledPsPlusTier'),
-  oledPsPlusStatus: document.getElementById('oledPsPlusStatus'),
-  oledPsPlusCount: document.getElementById('oledPsPlusCount'),
-  oledPsPlusAccount: document.getElementById('oledPsPlusAccount'),
-  oledPsPlusPerks: document.getElementById('oledPsPlusPerks'),
-  oledPsPlusStatusTag: document.getElementById('oledPsPlusStatusTag'),
-  oledCountPs4Owned: document.getElementById('oledCountPs4Owned'),
-  oledCountPs5Owned: document.getElementById('oledCountPs5Owned'),
-  oledCountPs4Plus: document.getElementById('oledCountPs4Plus'),
-  oledCountPs5Plus: document.getElementById('oledCountPs5Plus'),
-  listPs4Owned: document.getElementById('listPs4Owned'),
-  listPs5Owned: document.getElementById('listPs5Owned'),
-  listPs4Plus: document.getElementById('listPs4Plus'),
-  listPs5Plus: document.getElementById('listPs5Plus'),
+  tabPsPlus: $("tabOledPsPlus"),
+  panePsPlus: $("paneOledPsPlus"),
+  psPlusTier: $("oledPsPlusTier"),
+  psPlusStatus: $("oledPsPlusStatus"),
+  psPlusCount: $("oledPsPlusCount"),
+  psPlusAccount: $("oledPsPlusAccount"),
+  psPlusPerks: $("oledPsPlusPerks"),
+  psPlusStatusTag: $("oledPsPlusStatusTag"),
 
-  // Game Detail Modal Inspector
-  gameDetailModal: document.getElementById('gameDetailModal'),
-  btnModalClose: document.getElementById('btnModalClose'),
-  modalCoverImg: document.getElementById('modalCoverImg'),
-  modalPlatformBadge: document.getElementById('modalPlatformBadge'),
-  modalLicenseBadge: document.getElementById('modalLicenseBadge'),
-  modalGameTitle: document.getElementById('modalGameTitle'),
-  modalTitleId: document.getElementById('modalTitleId'),
-  modalEntitlementId: document.getElementById('modalEntitlementId'),
-  modalPlaytime: document.getElementById('modalPlaytime'),
-  modalPlayCount: document.getElementById('modalPlayCount'),
-  modalLastPlayed: document.getElementById('modalLastPlayed'),
-  modalDownloadable: document.getElementById('modalDownloadable'),
-  modalStoreLink: document.getElementById('modalStoreLink'),
-  btnCopyDetails: document.getElementById('btnCopyDetails'),
+  counts: {
+    "ps4-owned": $("oledCountPs4Owned"),
+    "ps5-owned": $("oledCountPs5Owned"),
+    "ps4-plus": $("oledCountPs4Plus"),
+    "ps5-plus": $("oledCountPs5Plus")
+  },
+  panes: {
+    "psplus": $("paneOledPsPlus"),
+    "ps4-owned": $("paneOledPs4Owned"),
+    "ps5-owned": $("paneOledPs5Owned"),
+    "ps4-plus": $("paneOledPs4Plus"),
+    "ps5-plus": $("paneOledPs5Plus")
+  },
+  lists: {
+    "ps4-owned": $("listPs4Owned"),
+    "ps5-owned": $("listPs5Owned"),
+    "ps4-plus": $("listPs4Plus"),
+    "ps5-plus": $("listPs5Plus")
+  },
 
-  // Copy Simple List Modal
-  btnOpenCopySimple: document.getElementById('btnOpenCopySimple'),
-  copySimpleModal: document.getElementById('copySimpleModal'),
-  btnCopyModalClose: document.getElementById('btnCopyModalClose'),
-  btnCopyWithPlus: document.getElementById('btnCopyWithPlus'),
-  btnCopyWithoutPlus: document.getElementById('btnCopyWithoutPlus'),
-  copyWithPlusMeta: document.getElementById('copyWithPlusMeta'),
-  copyWithoutPlusMeta: document.getElementById('copyWithoutPlusMeta'),
+  footer: document.querySelector(".oled-footer"),
+  btnOpenCopySimple: $("btnOpenCopySimple"),
 
-  // Toast
-  toast: document.getElementById('toastNotification')
+  detailModal: $("gameDetailModal"),
+  btnModalClose: $("btnModalClose"),
+  modalCover: $("modalCoverImg"),
+  modalPlatform: $("modalPlatformBadge"),
+  modalLicense: $("modalLicenseBadge"),
+  modalTitle: $("modalGameTitle"),
+  modalTitleId: $("modalTitleId"),
+  modalEntitlement: $("modalEntitlementId"),
+  modalPlaytime: $("modalPlaytime"),
+  modalPlayCount: $("modalPlayCount"),
+  modalLastPlayed: $("modalLastPlayed"),
+  modalDownloadable: $("modalDownloadable"),
+  modalStoreLink: $("modalStoreLink"),
+  btnCopyDetails: $("btnCopyDetails"),
+
+  copyModal: $("copySimpleModal"),
+  btnCopyModalClose: $("btnCopyModalClose"),
+  btnCopyWithPlus: $("btnCopyWithPlus"),
+  btnCopyWithoutPlus: $("btnCopyWithoutPlus"),
+  copyWithPlusMeta: $("copyWithPlusMeta"),
+  copyWithoutPlusMeta: $("copyWithoutPlusMeta"),
+
+  toast: $("toastNotification"),
+  preloader: $("sitePreloader")
 };
 
-// =========================================================================
-// SECURITY: Strict HTML escaping for all user-supplied data
-// =========================================================================
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function showToast(text, duration = 3000) {
+  if (!els.toast) return;
+  els.toast.textContent = text;
+  els.toast.classList.remove("hidden");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => els.toast.classList.add("hidden"), duration);
 }
 
-// SECURITY: Validate and sanitize URLs before inserting into DOM
 function sanitizeUrl(url) {
-  if (!url) return '';
+  if (!url) return "";
   try {
     const parsed = new URL(url);
-    // Only allow https URLs for images and links
-    if (parsed.protocol === 'https:' || parsed.protocol === 'data:') {
-      return url;
-    }
-    return '';
+    return parsed.protocol === "https:" || parsed.protocol === "data:" ? url : "";
   } catch {
-    return '';
+    return "";
   }
 }
 
-// SECURITY: Validate NPSSO token format (alphanumeric, 64 chars)
-function isValidNpssoFormat(token) {
-  return /^[A-Za-z0-9]{64}$/.test(token);
+function getArtworkFallback(title, platform) {
+  const initials = (title || "PS")
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0] || "")
+    .join("")
+    .toUpperCase() || "PS";
+  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23111111"/><text x="150" y="145" font-family="sans-serif" font-size="34" font-weight="700" fill="white" text-anchor="middle">${encodeURIComponent(initials)}</text><text x="150" y="210" font-family="sans-serif" font-size="16" font-weight="700" fill="%23888888" text-anchor="middle">${encodeURIComponent(platform)}</text></svg>`;
 }
 
-// SECURITY: Extract and validate token from user input
-function extractToken(rawInput) {
-  let token = (rawInput || '').trim().replace(/^["']|["']$/g, '').trim();
-
-  // Handle JSON format: {"npsso": "..."}
-  if (token.startsWith('{') && token.includes('npsso')) {
+function extractToken(raw) {
+  let val = (raw || "").trim().replace(/^["']|["']$/g, "").trim();
+  if (val.startsWith("{") && val.includes("npsso")) {
     try {
-      const parsed = JSON.parse(token);
-      if (parsed.npsso) token = parsed.npsso.trim();
+      const parsed = JSON.parse(val);
+      if (parsed.npsso) val = parsed.npsso.trim();
     } catch {
-      const match = token.match(/"npsso"\s*:\s*"([^"]+)"/);
-      if (match) token = match[1].trim();
+      const match = val.match(/"npsso"\s*:\s*"([^"]+)"/);
+      if (match) val = match[1].trim();
     }
   }
-
-  return token;
+  return val;
 }
 
-// SVG Placeholder generator for missing cover artwork (Clean, 0 emojis)
-function getArtworkFallback(title, platform) {
-  const initials = (title || 'PS')
-    .split(' ')
-    .slice(0, 2)
-    .map(w => w[0] || '')
-    .join('')
-    .toUpperCase() || 'PS';
-  const bgColor = '#111111';
-
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="${encodeURIComponent(bgColor)}"/><text x="150" y="145" font-family="'Google Sans', sans-serif" font-size="34" font-weight="700" fill="white" text-anchor="middle">${encodeURIComponent(initials)}</text><text x="150" y="210" font-family="'Google Sans', sans-serif" font-size="16" font-weight="700" fill="rgba(255,255,255,0.7)" text-anchor="middle">${encodeURIComponent(platform)}</text></svg>`;
+function setViewMode(isLoggedIn) {
+  if (isLoggedIn) {
+    localStorage.setItem("psn_session_active", "true");
+    els.app?.classList.remove("is-centered");
+    els.controlSection?.classList.add("hidden");
+    els.gamesSection?.classList.remove("hidden");
+    els.topRight?.classList.remove("hidden");
+    els.footer?.classList.remove("hidden");
+  } else {
+    localStorage.removeItem("psn_session_active");
+    els.app?.classList.add("is-centered");
+    els.controlSection?.classList.remove("hidden");
+    els.gamesSection?.classList.add("hidden");
+    els.topRight?.classList.add("hidden");
+    els.footer?.classList.add("hidden");
+    if (els.tokenInput) els.tokenInput.value = "";
+  }
 }
 
-// Toast Notification
-function showToast(msg) {
-  if (!dom.toast) return;
-  dom.toast.textContent = msg;
-  dom.toast.classList.remove('hidden');
-  setTimeout(() => {
-    dom.toast.classList.add('hidden');
-  }, 3200);
+function toggleDrawer(drawer, button) {
+  if (!drawer || !button) return;
+  const isOpen = drawer.classList.toggle("open");
+  const chevron = button.querySelector(".oled-chevron");
+  if (chevron) chevron.classList.toggle("open", isOpen);
+  button.setAttribute("aria-expanded", String(isOpen));
 }
 
-// Filter helper for subsearches
-function filterGames(list, query) {
-  if (!query || !query.trim()) return list;
-  const q = query.toLowerCase().trim();
-  return list.filter(g => 
-    (g.name && g.name.toLowerCase().includes(q)) ||
-    (g.titleId && g.titleId.toLowerCase().includes(q)) ||
-    (g.entitlementId && g.entitlementId.toLowerCase().includes(q))
+function logError(message, badgeText = "ERROR") {
+  if (els.logsDrawer && !els.logsDrawer.classList.contains("open")) {
+    toggleDrawer(els.logsDrawer, els.btnToggleLogs);
+  }
+  if (els.logsBadge) {
+    els.logsBadge.textContent = badgeText.toUpperCase();
+    els.logsBadge.className = "oled-mini-badge badge-error";
+  }
+  if (els.logsEta) {
+    els.logsEta.textContent = badgeText.toLowerCase();
+    els.logsEta.style.color = "#ef4444";
+  }
+  if (els.progressBar) {
+    els.progressBar.className = "oled-progress-bar bar-error";
+    els.progressBar.style.width = "100%";
+  }
+  if (els.logsStream) {
+    const row = document.createElement("div");
+    row.className = "log-line log-line-error";
+    row.textContent = `[ERROR] ${message}`;
+    els.logsStream.appendChild(row);
+    els.logsStream.scrollTop = els.logsStream.scrollHeight;
+  }
+  if (els.tokenInput) {
+    els.tokenInput.classList.remove("input-error");
+    void els.tokenInput.offsetWidth;
+    els.tokenInput.classList.add("input-error");
+    els.tokenInput.focus();
+  }
+  showToast(message);
+}
+
+function filterList(games, query) {
+  if (!query) return games;
+  const q = query.toLowerCase();
+  return games.filter(
+    (g) =>
+      g.name.toLowerCase().includes(q) ||
+      g.titleId.toLowerCase().includes(q) ||
+      g.entitlementId.toLowerCase().includes(q)
   );
 }
 
-// Logged-in / Logged-out State Handlers
-function setOledLoggedInState() {
-  localStorage.setItem('psn_session_active', 'true');
-  if (dom.minimalOledApp) dom.minimalOledApp.classList.remove('is-centered');
-  if (dom.oledControlSection) dom.oledControlSection.classList.add('hidden');
-  if (dom.oledGamesSection) dom.oledGamesSection.classList.remove('hidden');
-  if (dom.oledTopRight) dom.oledTopRight.classList.remove('hidden');
-  if (dom.oledAccountPreview) dom.oledAccountPreview.classList.remove('hidden');
-  if (dom.btnOledLogout) dom.btnOledLogout.classList.remove('hidden');
-  if (dom.oledFooter) dom.oledFooter.classList.remove('hidden');
-}
-
-function setOledLoggedOutState() {
-  localStorage.removeItem('psn_session_active');
-  if (dom.minimalOledApp) dom.minimalOledApp.classList.add('is-centered');
-
-  // Show Token Entering section
-  if (dom.oledControlSection) dom.oledControlSection.classList.remove('hidden');
-
-  // Hide Games section, Account preview, Logout button & Footer
-  if (dom.oledGamesSection) dom.oledGamesSection.classList.add('hidden');
-  if (dom.oledTopRight) dom.oledTopRight.classList.add('hidden');
-  if (dom.oledAccountPreview) dom.oledAccountPreview.classList.add('hidden');
-  if (dom.btnOledLogout) dom.btnOledLogout.classList.add('hidden');
-  if (dom.oledFooter) dom.oledFooter.classList.add('hidden');
-
-  // Clear token input
-  if (dom.oledTokenInput) dom.oledTokenInput.value = '';
-
-  // Collapse drawers smoothly
-  if (dom.oledTutorialDrawer) dom.oledTutorialDrawer.classList.remove('open');
-  if (dom.btnOledHowToReceive) {
-    dom.btnOledHowToReceive.querySelector('.oled-chevron')?.classList.remove('open');
-    dom.btnOledHowToReceive.setAttribute('aria-expanded', 'false');
-  }
-  if (dom.oledLogsDrawer) dom.oledLogsDrawer.classList.remove('open');
-  if (dom.btnOledToggleLogs) {
-    dom.btnOledToggleLogs.querySelector('.oled-chevron')?.classList.remove('open');
-    dom.btnOledToggleLogs.setAttribute('aria-expanded', 'false');
-  }
-
-  // Reset progress and log badges
-  if (dom.oledProgressBar) {
-    dom.oledProgressBar.className = 'oled-progress-bar';
-    dom.oledProgressBar.style.width = '0%';
-  }
-  if (dom.oledLogsStatusBadge) {
-    dom.oledLogsStatusBadge.className = 'oled-mini-badge';
-    dom.oledLogsStatusBadge.textContent = 'READY';
-  }
-  if (dom.oledLogsEtaText) dom.oledLogsEtaText.textContent = '';
-  if (dom.oledLogsStream) {
-    dom.oledLogsStream.innerHTML = '<div class="log-line">[SYSTEM] Ready. Connect token or view synced library below.</div>';
-  }
-}
-
-function handleLogout() {
-  // Animate panel blurring and fading away
-  if (dom.oledGamesSection && !dom.oledGamesSection.classList.contains('hidden')) {
-    dom.oledGamesSection.classList.remove('blur-fade-in');
-    dom.oledGamesSection.classList.add('blur-fade-out');
-  }
-  if (dom.oledTopRight && !dom.oledTopRight.classList.contains('hidden')) {
-    dom.oledTopRight.classList.remove('blur-fade-in');
-    dom.oledTopRight.classList.add('blur-fade-out');
-  }
-
-  setTimeout(() => {
-    setOledLoggedOutState();
-    if (dom.oledGamesSection) dom.oledGamesSection.classList.remove('blur-fade-out');
-    if (dom.oledTopRight) dom.oledTopRight.classList.remove('blur-fade-out');
-
-    // Reveal token entering card with smooth blur-fade-in
-    if (dom.oledControlSection) {
-      dom.oledControlSection.classList.remove('hidden');
-      dom.oledControlSection.classList.remove('blur-fade-out');
-      dom.oledControlSection.classList.add('blur-fade-in');
-    }
-
-    showToast('Logged out. Returned to token entry.');
-  }, 350);
-}
-
-// Minimal OLED Tabs & Games Rendering
-function switchOledTab(targetTab) {
-  state.activeOledTab = targetTab;
-
-  // 1. Update Tab buttons
-  document.querySelectorAll('.oled-tab-btn').forEach(btn => {
-    if (btn.dataset.oledTab === targetTab) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
-
-  // 2. Hide all tab panes
-  if (dom.paneOledPsPlus) dom.paneOledPsPlus.classList.add('hidden');
-  if (dom.paneOledPs4Owned) dom.paneOledPs4Owned.classList.add('hidden');
-  if (dom.paneOledPs5Owned) dom.paneOledPs5Owned.classList.add('hidden');
-  if (dom.paneOledPs4Plus) dom.paneOledPs4Plus.classList.add('hidden');
-  if (dom.paneOledPs5Plus) dom.paneOledPs5Plus.classList.add('hidden');
-
-  // 3. Show targeted pane & configure search
-  if (targetTab === 'psplus') {
-    if (dom.paneOledPsPlus) dom.paneOledPsPlus.classList.remove('hidden');
-    if (dom.oledSearchContainer) dom.oledSearchContainer.style.display = 'none';
-  } else if (targetTab === 'ps4-owned') {
-    if (dom.paneOledPs4Owned) dom.paneOledPs4Owned.classList.remove('hidden');
-    if (dom.oledSearchContainer) {
-      dom.oledSearchContainer.style.display = 'block';
-      if (dom.oledGameSearch) dom.oledGameSearch.placeholder = 'filter PS4 owned titles...';
-    }
-  } else if (targetTab === 'ps5-owned') {
-    if (dom.paneOledPs5Owned) dom.paneOledPs5Owned.classList.remove('hidden');
-    if (dom.oledSearchContainer) {
-      dom.oledSearchContainer.style.display = 'block';
-      if (dom.oledGameSearch) dom.oledGameSearch.placeholder = 'filter PS5 owned titles...';
-    }
-  } else if (targetTab === 'ps4-plus') {
-    if (dom.paneOledPs4Plus) dom.paneOledPs4Plus.classList.remove('hidden');
-    if (dom.oledSearchContainer) {
-      dom.oledSearchContainer.style.display = 'block';
-      if (dom.oledGameSearch) dom.oledGameSearch.placeholder = 'filter PS4 PS+ titles...';
-    }
-  } else if (targetTab === 'ps5-plus') {
-    if (dom.paneOledPs5Plus) dom.paneOledPs5Plus.classList.remove('hidden');
-    if (dom.oledSearchContainer) {
-      dom.oledSearchContainer.style.display = 'block';
-      if (dom.oledGameSearch) dom.oledGameSearch.placeholder = 'filter PS5 PS+ titles...';
-    }
-  }
-
-  // 4. Render active tab's games with filter
-  renderCurrentOledTabGames();
-}
-
-function renderCurrentOledTabGames() {
-  if (!state.library) return;
-  const { games } = state.library;
-  const query = (dom.oledGameSearch?.value || state.oledSearchQuery || '').trim();
-
-  const ownedPs4 = games.filter(g => !g.isPsPlus && g.platform === 'PS4');
-  const ownedPs5 = games.filter(g => !g.isPsPlus && g.platform === 'PS5');
-  const plusPs4 = games.filter(g => g.isPsPlus && g.platform === 'PS4');
-  const plusPs5 = games.filter(g => g.isPsPlus && g.platform === 'PS5');
-
-  if (state.activeOledTab === 'ps4-owned') {
-    renderOledGameList(dom.listPs4Owned, filterGames(ownedPs4, query));
-  } else if (state.activeOledTab === 'ps5-owned') {
-    renderOledGameList(dom.listPs5Owned, filterGames(ownedPs5, query));
-  } else if (state.activeOledTab === 'ps4-plus') {
-    renderOledGameList(dom.listPs4Plus, filterGames(plusPs4, query));
-  } else if (state.activeOledTab === 'ps5-plus') {
-    renderOledGameList(dom.listPs5Plus, filterGames(plusPs5, query));
-  }
-}
-
-function renderMinimalOled() {
-  if (!state.library) return;
-  const { account, summary, games } = state.library;
-
-  // 1. Top Bar Preview — use textContent (safe)
-  if (dom.oledAccountOnlineId) {
-    dom.oledAccountOnlineId.textContent = (account.onlineId || 'PLAYSTATION USER').toUpperCase();
-  }
-  if (dom.oledAccountTierBadge) {
-    dom.oledAccountTierBadge.textContent = account.isPlusActive ? 'PS PLUS' : 'NO PLUS';
-  }
-
-  // 2. TAB PANE: PS+ Entitlements — use textContent (safe)
-  if (dom.oledPsPlusTier) {
-    dom.oledPsPlusTier.textContent = account.isPlusActive ? 'PlayStation Plus' : 'No Active Membership';
-  }
-  if (dom.oledPsPlusStatus) {
-    dom.oledPsPlusStatus.textContent = account.isPlusActive ? 'Active' : 'Inactive';
-  }
-  if (dom.oledPsPlusCount) {
-    const plusCount = summary.psPlusEntitlements?.total || games.filter(g => g.isPsPlus).length;
-    dom.oledPsPlusCount.textContent = `${plusCount} Titles`;
-  }
-  if (dom.oledPsPlusAccount) {
-    dom.oledPsPlusAccount.textContent = account.onlineId || 'Unknown';
-  }
-  if (dom.oledPsPlusPerks) {
-    dom.oledPsPlusPerks.textContent = account.psPlusDescription || 'Monthly Games, Online Multiplayer, Exclusive Discounts & Cloud Storage';
-  }
-  if (dom.oledPsPlusStatusTag) {
-    dom.oledPsPlusStatusTag.textContent = account.isPlusActive ? 'ACTIVE' : 'INACTIVE';
-    dom.oledPsPlusStatusTag.className = account.isPlusActive
-      ? 'oled-status-tag status-active'
-      : 'oled-status-tag status-inactive';
-  }
-
-  // 3. Tab Badge Counts
-  const ownedPs4 = games.filter(g => !g.isPsPlus && g.platform === 'PS4');
-  const ownedPs5 = games.filter(g => !g.isPsPlus && g.platform === 'PS5');
-  const plusPs4 = games.filter(g => g.isPsPlus && g.platform === 'PS4');
-  const plusPs5 = games.filter(g => g.isPsPlus && g.platform === 'PS5');
-
-  if (dom.oledCountPs4Owned) dom.oledCountPs4Owned.textContent = ownedPs4.length;
-  if (dom.oledCountPs5Owned) dom.oledCountPs5Owned.textContent = ownedPs5.length;
-  if (dom.oledCountPs4Plus) dom.oledCountPs4Plus.textContent = plusPs4.length;
-  if (dom.oledCountPs5Plus) dom.oledCountPs5Plus.textContent = plusPs5.length;
-
-  // 4. Render all game lists
-  renderOledGameList(dom.listPs4Owned, ownedPs4);
-  renderOledGameList(dom.listPs5Owned, ownedPs5);
-  renderOledGameList(dom.listPs4Plus, plusPs4);
-  renderOledGameList(dom.listPs5Plus, plusPs5);
-
-  // Switch to currently active tab
-  switchOledTab(state.activeOledTab);
-}
-
-// SECURITY: Game list rendering uses safe DOM APIs instead of innerHTML
-function renderOledGameList(container, gamesList) {
+function renderGameList(container, list) {
   if (!container) return;
+  container.innerHTML = "";
 
-  // Clear existing content safely
-  container.innerHTML = '';
-
-  if (gamesList.length === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.className = 'oled-empty-msg font-mono';
-    emptyMsg.style.cssText = 'padding: 12px; color: #555555; font-size: 0.78rem;';
-    emptyMsg.textContent = 'No matching titles found.';
-    container.appendChild(emptyMsg);
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "oled-empty-msg font-mono";
+    empty.style.cssText = "padding: 12px; color: #555555; font-size: 0.78rem;";
+    empty.textContent = "No matching titles found.";
+    container.appendChild(empty);
     return;
   }
 
-  gamesList.forEach(g => {
+  for (const g of list) {
     const fallback = getArtworkFallback(g.name, g.platform);
     const coverUrl = sanitizeUrl(g.imageUrl) || fallback;
 
-    const item = document.createElement('div');
-    item.className = 'oled-game-item';
-    item.addEventListener('click', () => window.inspectGame(g.titleId));
+    const item = document.createElement("div");
+    item.className = "oled-game-item";
+    item.addEventListener("click", () => inspectGame(g.titleId));
 
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = coverUrl;
-    img.alt = g.name || 'Game';
-    img.className = 'oled-game-icon';
-    img.loading = 'lazy';
-    img.onerror = () => { img.onerror = null; img.src = fallback; };
+    img.alt = g.name || "Game";
+    img.className = "oled-game-icon";
+    img.loading = "lazy";
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = fallback;
+    };
 
-    const main = document.createElement('div');
-    main.className = 'oled-game-main';
+    const main = document.createElement("div");
+    main.className = "oled-game-main";
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'oled-game-name';
-    nameEl.title = g.name || '';
-    nameEl.textContent = g.name || 'Unknown Title';
+    const nameEl = document.createElement("div");
+    nameEl.className = "oled-game-name";
+    nameEl.title = g.name;
+    nameEl.textContent = g.name;
 
-    const subEl = document.createElement('div');
-    subEl.className = 'oled-game-sub font-mono';
-    subEl.textContent = `${g.titleId || g.platform} \u2022 ${g.platform}`;
+    const subEl = document.createElement("div");
+    subEl.className = "oled-game-sub font-mono";
+    subEl.textContent = `${g.titleId || g.platform} • ${g.platform}`;
 
-    main.appendChild(nameEl);
-    main.appendChild(subEl);
-
-    item.appendChild(img);
-    item.appendChild(main);
+    main.append(nameEl, subEl);
+    item.append(img, main);
 
     if (g.playtime) {
-      const playtimeEl = document.createElement('span');
-      playtimeEl.className = 'oled-game-playtime';
-      playtimeEl.textContent = g.playtime;
-      item.appendChild(playtimeEl);
+      const badge = document.createElement("span");
+      badge.className = "oled-game-playtime";
+      badge.textContent = g.playtime;
+      item.appendChild(badge);
     }
 
     container.appendChild(item);
+  }
+}
+
+function switchTab(tabKey) {
+  state.activeTab = tabKey;
+
+  document.querySelectorAll(".oled-tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.oledTab === tabKey);
   });
+
+  Object.entries(els.panes).forEach(([key, pane]) => {
+    if (pane) pane.classList.toggle("hidden", key !== tabKey);
+  });
+
+  if (els.searchContainer) {
+    els.searchContainer.style.display = tabKey === "psplus" ? "none" : "block";
+  }
+
+  if (els.gameSearch) {
+    const placeholders = {
+      "ps4-owned": "filter PS4 owned titles...",
+      "ps5-owned": "filter PS5 owned titles...",
+      "ps4-plus": "filter PS4 PS+ titles...",
+      "ps5-plus": "filter PS5 PS+ titles..."
+    };
+    els.gameSearch.placeholder = placeholders[tabKey] || "filter games...";
+  }
+
+  renderCurrentTab();
 }
 
-// Modal Closers — animated dismiss
-function closeModalAnimated(modalEl) {
-  if (!modalEl || modalEl.classList.contains('hidden')) return;
-  modalEl.classList.add('is-closing');
-  setTimeout(() => {
-    modalEl.classList.remove('is-closing');
-    modalEl.classList.add('hidden');
-  }, 240);
+function renderCurrentTab() {
+  if (!state.library?.games) return;
+  const { games } = state.library;
+  const q = (els.gameSearch?.value || state.searchQuery || "").trim();
+
+  const groups = {
+    "ps4-owned": games.filter((g) => !g.isPsPlus && g.platform === "PS4"),
+    "ps5-owned": games.filter((g) => !g.isPsPlus && g.platform === "PS5"),
+    "ps4-plus": games.filter((g) => g.isPsPlus && g.platform === "PS4"),
+    "ps5-plus": games.filter((g) => g.isPsPlus && g.platform === "PS5")
+  };
+
+  if (groups[state.activeTab] && els.lists[state.activeTab]) {
+    renderGameList(els.lists[state.activeTab], filterList(groups[state.activeTab], q));
+  }
 }
 
-// Game Modal Inspector
-window.inspectGame = function(titleId) {
-  const game = state.library?.games?.find(g => g.titleId === titleId);
+function renderDashboard() {
+  if (!state.library) return;
+  const { account, games } = state.library;
+
+  if (els.onlineId) els.onlineId.textContent = (account.onlineId || "PLAYSTATION USER").toUpperCase();
+  if (els.tierBadge) els.tierBadge.textContent = account.isPlusActive ? "PS PLUS" : "NO PLUS";
+
+  if (els.psPlusTier) els.psPlusTier.textContent = account.isPlusActive ? "PlayStation Plus" : "No Active Membership";
+  if (els.psPlusStatus) els.psPlusStatus.textContent = account.isPlusActive ? "Active" : "Inactive";
+  if (els.psPlusCount) {
+    const plusCount = games.filter((g) => g.isPsPlus).length;
+    els.psPlusCount.textContent = `${plusCount} Titles`;
+  }
+  if (els.psPlusAccount) els.psPlusAccount.textContent = account.onlineId || "Unknown";
+  if (els.psPlusPerks) {
+    els.psPlusPerks.textContent = account.psPlusDescription || "Monthly Games, Online Multiplayer & Cloud Storage";
+  }
+  if (els.psPlusStatusTag) {
+    els.psPlusStatusTag.textContent = account.isPlusActive ? "ACTIVE" : "INACTIVE";
+    els.psPlusStatusTag.className = `oled-status-tag ${account.isPlusActive ? "status-active" : "status-inactive"}`;
+  }
+
+  const counts = {
+    "ps4-owned": games.filter((g) => !g.isPsPlus && g.platform === "PS4").length,
+    "ps5-owned": games.filter((g) => !g.isPsPlus && g.platform === "PS5").length,
+    "ps4-plus": games.filter((g) => g.isPsPlus && g.platform === "PS4").length,
+    "ps5-plus": games.filter((g) => g.isPsPlus && g.platform === "PS5").length
+  };
+
+  Object.entries(counts).forEach(([k, count]) => {
+    if (els.counts[k]) els.counts[k].textContent = count;
+  });
+
+  switchTab(state.activeTab);
+}
+
+function inspectGame(titleId) {
+  const game = state.library?.games?.find((g) => g.titleId === titleId);
   if (!game) return;
 
-  state.activeGameDetail = game;
+  state.activeGame = game;
 
-  const fallbackUrl = getArtworkFallback(game.name, game.platform);
-  const safeImageUrl = sanitizeUrl(game.imageUrl) || fallbackUrl;
-  dom.modalCoverImg.src = safeImageUrl;
-  dom.modalCoverImg.onerror = () => { dom.modalCoverImg.src = fallbackUrl; };
+  const fallback = getArtworkFallback(game.name, game.platform);
+  els.modalCover.src = sanitizeUrl(game.imageUrl) || fallback;
+  els.modalCover.onerror = () => {
+    els.modalCover.src = fallback;
+  };
 
-  dom.modalGameTitle.textContent = game.name;
-  dom.modalPlatformBadge.textContent = game.platform;
-  dom.modalPlatformBadge.className = `ps-platform-tag ${game.platform === 'PS5' ? 'tag-ps5' : 'tag-ps4'}`;
+  els.modalTitle.textContent = game.name;
+  els.modalPlatform.textContent = game.platform;
+  els.modalPlatform.className = `ps-platform-tag ${game.platform === "PS5" ? "tag-ps5" : "tag-ps4"}`;
 
-  dom.modalLicenseBadge.textContent = game.isPsPlus ? 'PLAYSTATION PLUS CLAIM' : 'OWNED DIGITAL PURCHASE';
-  dom.modalLicenseBadge.className = `ps-license-tag ${game.isPsPlus ? 'license-plus' : 'license-owned'}`;
+  els.modalLicense.textContent = game.isPsPlus ? "PLAYSTATION PLUS CLAIM" : "OWNED DIGITAL PURCHASE";
+  els.modalLicense.className = `ps-license-tag ${game.isPsPlus ? "license-plus" : "license-owned"}`;
 
-  dom.modalTitleId.textContent = game.titleId || 'N/A';
-  dom.modalEntitlementId.textContent = game.entitlementId || 'N/A';
-  dom.modalPlaytime.textContent = game.playtime ? `${game.playtime} (${game.playCount || 1} sessions)` : 'Not recorded / Unplayed';
-  dom.modalPlayCount.textContent = game.playCount ? `${game.playCount} launches` : '\u2014';
-  dom.modalLastPlayed.textContent = game.lastPlayed || 'Never / Not synced';
-  dom.modalDownloadable.textContent = game.isDownloadable ? 'Active Digital Entitlement' : 'Inactive';
+  els.modalTitleId.textContent = game.titleId || "N/A";
+  els.modalEntitlement.textContent = game.entitlementId || "N/A";
+  els.modalPlaytime.textContent = game.playtime ? `${game.playtime} (${game.playCount || 1} sessions)` : "Not recorded";
+  els.modalPlayCount.textContent = game.playCount ? `${game.playCount} launches` : "—";
+  els.modalLastPlayed.textContent = game.lastPlayed || "Never";
+  els.modalDownloadable.textContent = game.isDownloadable ? "Active Entitlement" : "Inactive";
 
-  if (game.productId) {
-    dom.modalStoreLink.href = `https://store.playstation.com/en-us/product/${encodeURIComponent(game.productId)}`;
-  } else {
-    dom.modalStoreLink.href = `https://store.playstation.com/en-us/search/${encodeURIComponent(game.name)}`;
-  }
-  dom.modalStoreLink.style.display = 'inline-flex';
+  const storeBase = "https://store.playstation.com/en-us";
+  els.modalStoreLink.href = game.productId
+    ? `${storeBase}/product/${encodeURIComponent(game.productId)}`
+    : `${storeBase}/search/${encodeURIComponent(game.name)}`;
 
-  dom.gameDetailModal.classList.remove('hidden');
-};
+  els.detailModal?.classList.remove("hidden");
+}
 
-// Copy Simple List Generator (Grouped by Platform: PS4 then PS5)
-function generateSimpleList(withPlus = false) {
-  if (!state.library?.games) return { text: '', count: 0 };
-  const allGames = state.library.games;
-  const filtered = withPlus ? allGames : allGames.filter(g => !g.isPsPlus);
+function closeModal(modal) {
+  if (!modal || modal.classList.contains("hidden")) return;
+  modal.classList.add("is-closing");
+  setTimeout(() => {
+    modal.classList.remove("is-closing");
+    modal.classList.add("hidden");
+  }, 200);
+}
 
-  const ps4Set = new Set();
-  const ps5Set = new Set();
-  const otherSet = new Set();
+function generateSimpleList(withPlus) {
+  if (!state.library?.games) return { text: "", count: 0 };
+  const pool = withPlus ? state.library.games : state.library.games.filter((g) => !g.isPsPlus);
 
-  for (const g of filtered) {
-    const title = (g.name || '').trim();
+  const ps4 = [];
+  const ps5 = [];
+  const other = [];
+
+  for (const g of pool) {
+    const title = (g.name || "").trim();
     if (!title) continue;
-    const platform = (g.platform || 'PS4').trim().toUpperCase();
-
-    if (platform === 'PS4') {
-      ps4Set.add(title);
-    } else if (platform === 'PS5') {
-      ps5Set.add(title);
-    } else {
-      otherSet.add(title);
-    }
+    const plat = (g.platform || "PS4").trim().toUpperCase();
+    if (plat === "PS4") ps4.push(title);
+    else if (plat === "PS5") ps5.push(title);
+    else other.push(title);
   }
 
-  const ps4List = Array.from(ps4Set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-  const ps5List = Array.from(ps5Set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-  const otherList = Array.from(otherSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const sortAlphabetical = (arr) => [...new Set(arr)].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  const sortedPs4 = sortAlphabetical(ps4);
+  const sortedPs5 = sortAlphabetical(ps5);
+  const sortedOther = sortAlphabetical(other);
 
   const sections = [];
-
-  if (ps4List.length > 0) {
-    sections.push(['PS4', ...ps4List].join('\n'));
-  }
-
-  if (ps5List.length > 0) {
-    sections.push(['PS5', ...ps5List].join('\n'));
-  }
-
-  if (otherList.length > 0) {
-    sections.push(['OTHER', ...otherList].join('\n'));
-  }
-
-  const totalCount = ps4List.length + ps5List.length + otherList.length;
+  if (sortedPs4.length) sections.push(["PS4", ...sortedPs4].join("\n"));
+  if (sortedPs5.length) sections.push(["PS5", ...sortedPs5].join("\n"));
+  if (sortedOther.length) sections.push(["OTHER", ...sortedOther].join("\n"));
 
   return {
-    text: sections.join('\n\n'),
-    count: totalCount
+    text: sections.join("\n\n"),
+    count: sortedPs4.length + sortedPs5.length + sortedOther.length
   };
 }
 
 async function copySimpleList(withPlus) {
   const { text, count } = generateSimpleList(withPlus);
   if (!count) {
-    showToast('No matching games found in library.');
+    showToast("No games found to copy.");
     return;
   }
 
   try {
     await navigator.clipboard.writeText(text);
   } catch {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
   }
 
-  const typeLabel = withPlus ? 'with PS+' : 'without PS+';
-  showToast(`Copied ${count} games (${typeLabel}) to clipboard!`);
-  closeModalAnimated(dom.copySimpleModal);
+  showToast(`Copied ${count} titles (${withPlus ? "with PS+" : "owned only"}) to clipboard!`);
+  closeModal(els.copyModal);
 }
 
-function openCopySimpleModal() {
-  if (!state.library?.games || state.library.games.length === 0) {
-    showToast('Please connect and fetch your library first.');
-    return;
-  }
-
-  const withPlusCount = state.library.games.length;
-  const withoutPlusCount = state.library.games.filter(g => !g.isPsPlus).length;
-  const psPlusClaims = withPlusCount - withoutPlusCount;
-
-  if (dom.copyWithPlusMeta) {
-    dom.copyWithPlusMeta.textContent = `${withPlusCount} titles (includes ${psPlusClaims} PS+ claims)`;
-  }
-  if (dom.copyWithoutPlusMeta) {
-    dom.copyWithoutPlusMeta.textContent = `${withoutPlusCount} owned purchases only`;
-  }
-
-  dom.copySimpleModal.classList.remove('hidden');
-}
-
-// Dedicated Error Logger
-function logOledError(errorMessage, badgeLabel = 'ERROR') {
-  // Ensure the OLED logs drawer is unfolded and accessible
-  if (dom.oledLogsDrawer) dom.oledLogsDrawer.classList.add('open');
-  if (dom.btnOledToggleLogs) {
-    const chevron = dom.btnOledToggleLogs.querySelector('.oled-chevron');
-    if (chevron) chevron.classList.add('open');
-    dom.btnOledToggleLogs.setAttribute('aria-expanded', 'true');
-  }
-
-  // Set OLED Status Badge to ERROR (with red styling)
-  if (dom.oledLogsStatusBadge) {
-    dom.oledLogsStatusBadge.textContent = badgeLabel.toUpperCase();
-    dom.oledLogsStatusBadge.className = 'oled-mini-badge badge-error';
-  }
-  if (dom.oledLogsEtaText) {
-    dom.oledLogsEtaText.textContent = badgeLabel.toLowerCase();
-    dom.oledLogsEtaText.style.color = '#ef4444';
-  }
-
-  // Set progress bar to red error state
-  if (dom.oledProgressBar) {
-    dom.oledProgressBar.className = 'oled-progress-bar bar-error';
-    dom.oledProgressBar.style.width = '100%';
-  }
-
-  // Append clear red error line into OLED log stream (safe DOM API)
-  if (dom.oledLogsStream) {
-    const errLine = document.createElement('div');
-    errLine.className = 'log-line log-line-error';
-    errLine.textContent = `[ERROR] ${errorMessage}`;
-    dom.oledLogsStream.appendChild(errLine);
-    dom.oledLogsStream.scrollTop = dom.oledLogsStream.scrollHeight;
-  }
-
-  // Trigger error shake animation on token input
-  if (dom.oledTokenInput) {
-    dom.oledTokenInput.classList.remove('input-error');
-    void dom.oledTokenInput.offsetWidth; // trigger reflow
-    dom.oledTokenInput.classList.add('input-error');
-    dom.oledTokenInput.focus();
-  }
-
-  // Toast feedback
-  showToast(errorMessage);
-}
-
-// Streaming Sync Pipeline
-async function runStreamingSync(rawToken) {
-  // SECURITY: Extract and validate token
+async function startSync(rawToken) {
   const token = extractToken(rawToken);
 
-  // RULE 1: If empty -> report error immediately
   if (!token) {
-    logOledError('Token is empty! Please paste your 64-character PlayStation NPSSO token.', 'token empty');
+    logError("Please enter your 64-character PlayStation NPSSO token.", "token empty");
+    return;
+  }
+  if (token.length !== 64 || !/^[A-Za-z0-9]{64}$/.test(token)) {
+    logError("Invalid token format: NPSSO token must be 64 alphanumeric characters.", "wrong token");
     return;
   }
 
-  // RULE 2: If less than 64 characters -> wrong token
-  if (token.length < 64) {
-    logOledError(`Wrong token: NPSSO token must be 64 characters (entered ${token.length}).`, 'wrong token');
-    return;
+  if (els.logsBadge) {
+    els.logsBadge.className = "oled-mini-badge";
+    els.logsBadge.textContent = "CONNECTING";
+  }
+  if (els.logsEta) {
+    els.logsEta.style.color = "";
+    els.logsEta.textContent = "starting...";
+  }
+  if (els.progressBar) {
+    els.progressBar.className = "oled-progress-bar";
+    els.progressBar.style.width = "5%";
+  }
+  els.tokenInput?.classList.remove("input-error");
+
+  if (els.logsDrawer && !els.logsDrawer.classList.contains("open")) {
+    toggleDrawer(els.logsDrawer, els.btnToggleLogs);
+  }
+  if (els.logsStream) {
+    els.logsStream.innerHTML = '<div class="log-line">[START] Connecting to PlayStation Network...</div>';
   }
 
-  // SECURITY: Validate token format
-  if (!isValidNpssoFormat(token)) {
-    logOledError('Invalid token format: NPSSO token must be exactly 64 alphanumeric characters.', 'invalid format');
-    return;
-  }
-
-  // Reset progress and badges to active state
-  if (dom.oledLogsStatusBadge) {
-    dom.oledLogsStatusBadge.className = 'oled-mini-badge';
-    dom.oledLogsStatusBadge.textContent = 'CONNECTING';
-  }
-  if (dom.oledLogsEtaText) {
-    dom.oledLogsEtaText.style.color = '';
-    dom.oledLogsEtaText.textContent = 'starting...';
-  }
-  if (dom.oledProgressBar) {
-    dom.oledProgressBar.className = 'oled-progress-bar';
-    dom.oledProgressBar.style.width = '6%';
-  }
-  if (dom.oledTokenInput) {
-    dom.oledTokenInput.classList.remove('input-error');
-  }
-
-  // Minimal OLED Logs Box: automatically unfold drawer
-  if (dom.oledLogsDrawer) dom.oledLogsDrawer.classList.add('open');
-  if (dom.btnOledToggleLogs) {
-    const chevron = dom.btnOledToggleLogs.querySelector('.oled-chevron');
-    if (chevron) chevron.classList.add('open');
-    dom.btnOledToggleLogs.setAttribute('aria-expanded', 'true');
-  }
-  if (dom.oledLogsStream) {
-    dom.oledLogsStream.innerHTML = `<div class="log-line">[INITIALIZE] Connecting with NPSSO token...</div>`;
-  }
-
-  // Check if browser is offline
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    logOledError('No connection: You appear to be offline. Please check your internet connection.', 'no connection');
-    return;
-  }
-
-  // RULE 3: If no connection for more than 3 seconds -> report error
-  const abortController = new AbortController();
-  let connectionTimeout = setTimeout(() => {
-    abortController.abort(new Error('No connection: Connection timed out after 3 seconds.'));
-  }, 3000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const response = await fetch('/api/fetch-stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/fetch-stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ npsso: token }),
-      signal: abortController.signal
+      signal: controller.signal
     });
 
-    if (!response.ok) {
-      clearTimeout(connectionTimeout);
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error || `Server responded with ${response.status}`);
+    if (!res.ok) {
+      clearTimeout(timer);
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || `Server responded with ${res.status}`);
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    let firstChunkReceived = false;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      // Clear the 3-second connection timer once connected & stream data arrives
-      if (!firstChunkReceived) {
-        firstChunkReceived = true;
-        clearTimeout(connectionTimeout);
-      }
-
+      clearTimeout(timer);
       buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split('\n\n');
-      buffer = parts.pop();
+      const chunks = buffer.split("\n\n");
+      buffer = chunks.pop();
 
-      for (const part of parts) {
-        if (!part.startsWith('data: ')) continue;
-        const rawJson = part.replace('data: ', '').trim();
-        if (!rawJson) continue;
+      for (const chunk of chunks) {
+        if (!chunk.startsWith("data: ")) continue;
+        const text = chunk.slice(6).trim();
+        if (!text) continue;
 
-        let data;
-        try {
-          data = JSON.parse(rawJson);
-        } catch (pe) {
-          console.error('Failed to parse SSE payload:', pe);
-          continue;
-        }
+        const data = JSON.parse(text);
+        if (data.error) throw new Error(data.error);
 
-        // CRITICAL: If server sent an error, throw it so outer catch handles it!
-        if (data.error) {
-          throw new Error(data.error);
+        if (els.progressBar && data.percent !== undefined) {
+          els.progressBar.style.width = `${data.percent}%`;
         }
-
-        // Update Minimal OLED Progress & Logs
-        if (dom.oledProgressBar && data.percent !== undefined) {
-          dom.oledProgressBar.style.width = `${data.percent}%`;
+        if (els.logsBadge) {
+          els.logsBadge.textContent = `${data.percent || 0}%`;
         }
-        if (dom.oledLogsStatusBadge) {
-          dom.oledLogsStatusBadge.textContent = `${data.percent || 0}%`;
+        if (els.logsEta && data.etaText) {
+          els.logsEta.textContent = data.etaText;
         }
-        if (dom.oledLogsEtaText && data.etaText) {
-          dom.oledLogsEtaText.textContent = data.etaText;
-        }
-        if (dom.oledLogsStream && data.message) {
-          const line = document.createElement('div');
-          line.className = 'log-line';
-          line.textContent = `[STEP ${data.step || 1}] ${data.message} ${data.etaText ? '(' + data.etaText + ')' : ''}`;
-          dom.oledLogsStream.appendChild(line);
-          dom.oledLogsStream.scrollTop = dom.oledLogsStream.scrollHeight;
+        if (els.logsStream && data.message) {
+          const row = document.createElement("div");
+          row.className = "log-line";
+          row.textContent = `[STEP ${data.step || 1}] ${data.message}`;
+          els.logsStream.appendChild(row);
+          els.logsStream.scrollTop = els.logsStream.scrollHeight;
         }
 
         if (data.completed && data.data) {
           state.library = data.data;
-          showToast('PlayStation Library synced successfully!');
+          showToast("PlayStation library synced successfully!");
 
-          if (dom.oledLogsStatusBadge) {
-            dom.oledLogsStatusBadge.textContent = 'SYNCED';
-            dom.oledLogsStatusBadge.className = 'oled-mini-badge badge-success';
+          if (els.logsBadge) {
+            els.logsBadge.textContent = "SYNCED";
+            els.logsBadge.className = "oled-mini-badge badge-success";
           }
-          if (dom.oledLogsEtaText) {
-            dom.oledLogsEtaText.textContent = 'complete';
-            dom.oledLogsEtaText.style.color = '#22c55e';
+          if (els.logsEta) {
+            els.logsEta.textContent = "complete";
+            els.logsEta.style.color = "#22c55e";
           }
-          if (dom.oledProgressBar) {
-            dom.oledProgressBar.className = 'oled-progress-bar';
-            dom.oledProgressBar.style.width = '100%';
+          if (els.progressBar) {
+            els.progressBar.style.width = "100%";
           }
-          
-          // Once all done, blur and fade away the token cards, then go to the panel!
-          if (dom.oledControlSection && !dom.oledControlSection.classList.contains('hidden')) {
-            dom.oledControlSection.classList.remove('blur-fade-in');
-            dom.oledControlSection.classList.add('blur-fade-out');
 
-            setTimeout(() => {
-              dom.oledControlSection.classList.add('hidden');
-              dom.oledControlSection.classList.remove('blur-fade-out');
-
-              setOledLoggedInState();
-              renderMinimalOled();
-
-              if (dom.oledGamesSection) {
-                dom.oledGamesSection.classList.remove('hidden');
-                dom.oledGamesSection.classList.add('blur-fade-in');
-              }
-              if (dom.oledTopRight) {
-                dom.oledTopRight.classList.remove('hidden');
-                dom.oledTopRight.classList.add('blur-fade-in');
-              }
-            }, 380);
-          } else {
-            setOledLoggedInState();
-            renderMinimalOled();
-          }
+          setTimeout(() => {
+            setViewMode(true);
+            renderDashboard();
+          }, 350);
         }
       }
     }
   } catch (err) {
-    clearTimeout(connectionTimeout);
-    let raw = err.message || String(err);
-    let errMsg = raw;
-    let badgeType = 'ERROR';
+    clearTimeout(timer);
+    const msg = err.name === "AbortError"
+      ? "Connection timed out. Sony PlayStation servers could not be reached."
+      : err.message || "Failed to fetch library.";
+    logError(msg);
+  }
+}
 
-    const lower = raw.toLowerCase();
-    if (
-      abortController.signal.aborted ||
-      err.name === 'AbortError' ||
-      !navigator.onLine ||
-      lower.includes('3 seconds') ||
-      lower.includes('timed out') ||
-      lower.includes('failed to fetch') ||
-      lower.includes('networkerror') ||
-      lower.includes('enotfound') ||
-      lower.includes('econnrefused') ||
-      lower.includes('no connection')
-    ) {
-      errMsg = 'No connection: Connection timed out after 3 seconds or offline.';
-      badgeType = 'no connection';
-    } else if (lower.includes('empty')) {
-      errMsg = 'Token is empty! Please paste your 64-character PlayStation NPSSO token.';
-      badgeType = 'token empty';
-    } else if (lower.includes('64') || lower.includes('wrong') || lower.includes('expired') || lower.includes('unauthorized') || lower.includes('oauth') || lower.includes('400') || lower.includes('401') || lower.includes('403') || lower.includes('invalid') || lower.includes('rejected')) {
-      errMsg = 'Wrong token: Authorization was rejected by Sony PlayStation. Please check your token and try again.';
-      badgeType = 'wrong token';
+function bindEvents() {
+  els.btnHowTo?.addEventListener("click", () => toggleDrawer(els.tutorialDrawer, els.btnHowTo));
+  els.btnToggleLogs?.addEventListener("click", () => toggleDrawer(els.logsDrawer, els.btnToggleLogs));
+
+  els.btnTogglePass?.addEventListener("click", () => {
+    if (!els.tokenInput) return;
+    els.tokenInput.type = els.tokenInput.type === "password" ? "text" : "password";
+  });
+
+  els.btnFetch?.addEventListener("click", () => startSync(els.tokenInput?.value));
+  els.tokenInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") startSync(els.tokenInput?.value);
+  });
+
+  els.btnLogout?.addEventListener("click", () => {
+    setViewMode(false);
+    showToast("Logged out.");
+  });
+
+  els.tabsNav?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".oled-tab-btn");
+    if (btn?.dataset.oledTab) switchTab(btn.dataset.oledTab);
+  });
+
+  els.gameSearch?.addEventListener("input", (e) => {
+    state.searchQuery = e.target.value;
+    renderCurrentTab();
+  });
+
+  els.btnOpenCopySimple?.addEventListener("click", () => {
+    if (!state.library?.games?.length) {
+      showToast("Please fetch your library first.");
+      return;
     }
+    const withPlus = state.library.games.length;
+    const withoutPlus = state.library.games.filter((g) => !g.isPsPlus).length;
+    if (els.copyWithPlusMeta) els.copyWithPlusMeta.textContent = `${withPlus} titles (includes ${withPlus - withoutPlus} PS+ claims)`;
+    if (els.copyWithoutPlusMeta) els.copyWithoutPlusMeta.textContent = `${withoutPlus} owned purchases only`;
+    els.copyModal?.classList.remove("hidden");
+  });
 
-    logOledError(errMsg, badgeType);
-  }
-}
+  els.btnCopyWithPlus?.addEventListener("click", () => copySimpleList(true));
+  els.btnCopyWithoutPlus?.addEventListener("click", () => copySimpleList(false));
 
-// Fetch cached library data
-async function fetchCachedLibrary() {
-  try {
-    const res = await fetch('/api/library');
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    return null;
-  }
-}
+  els.btnCopyDetails?.addEventListener("click", () => {
+    if (!state.activeGame) return;
+    const g = state.activeGame;
+    const text = `${g.name} [${g.platform}]\nTitle ID: ${g.titleId || "N/A"}\nLicense: ${g.isPsPlus ? "PlayStation Plus" : "Owned"}\nPlaytime: ${g.playtime || "N/A"}`;
+    navigator.clipboard.writeText(text).then(() => showToast("Copied specs to clipboard!"));
+  });
 
-// Event Listeners
-function bindEventListeners() {
-  // Minimal OLED: How to receive dropdown drawer
-  if (dom.btnOledHowToReceive && dom.oledTutorialDrawer) {
-    dom.btnOledHowToReceive.addEventListener('click', () => {
-      const isOpen = dom.oledTutorialDrawer.classList.toggle('open');
-      const chevron = dom.btnOledHowToReceive.querySelector('.oled-chevron');
-      if (chevron) chevron.classList.toggle('open', isOpen);
-      dom.btnOledHowToReceive.setAttribute('aria-expanded', String(isOpen));
-    });
-  }
+  els.btnModalClose?.addEventListener("click", () => closeModal(els.detailModal));
+  els.detailModal?.addEventListener("click", (e) => {
+    if (e.target === els.detailModal) closeModal(els.detailModal);
+  });
 
-  // Minimal OLED: Logs drawer toggle
-  if (dom.btnOledToggleLogs && dom.oledLogsDrawer) {
-    dom.btnOledToggleLogs.addEventListener('click', () => {
-      const isOpen = dom.oledLogsDrawer.classList.toggle('open');
-      const chevron = dom.btnOledToggleLogs.querySelector('.oled-chevron');
-      if (chevron) chevron.classList.toggle('open', isOpen);
-      dom.btnOledToggleLogs.setAttribute('aria-expanded', String(isOpen));
-    });
-  }
+  els.btnCopyModalClose?.addEventListener("click", () => closeModal(els.copyModal));
+  els.copyModal?.addEventListener("click", (e) => {
+    if (e.target === els.copyModal) closeModal(els.copyModal);
+  });
 
-  // Minimal OLED: Logout button (Top Right)
-  if (dom.btnOledLogout) {
-    dom.btnOledLogout.addEventListener('click', handleLogout);
-  }
-
-  // Minimal OLED: Tabs navigation
-  if (dom.oledTabsNav) {
-    dom.oledTabsNav.addEventListener('click', e => {
-      const btn = e.target.closest('.oled-tab-btn');
-      if (!btn) return;
-      const tabKey = btn.dataset.oledTab;
-      if (tabKey) switchOledTab(tabKey);
-    });
-  }
-
-  // Minimal OLED: Real-time search filter for active tab
-  if (dom.oledGameSearch) {
-    dom.oledGameSearch.addEventListener('input', e => {
-      state.oledSearchQuery = e.target.value;
-      renderCurrentOledTabGames();
-    });
-  }
-
-  // Minimal OLED: Password Visibility Toggle
-  if (dom.btnOledTogglePass && dom.oledTokenInput) {
-    dom.btnOledTogglePass.addEventListener('click', () => {
-      const isPass = dom.oledTokenInput.type === 'password';
-      dom.oledTokenInput.type = isPass ? 'text' : 'password';
-    });
-  }
-
-  // Minimal OLED: Fetch Button
-  if (dom.btnOledFetch && dom.oledTokenInput) {
-    dom.btnOledFetch.addEventListener('click', () => {
-      const raw = dom.oledTokenInput.value.trim();
-      if (!raw) {
-        logOledError('Token is empty! Please paste your 64-character PlayStation NPSSO token.', 'token empty');
-        return;
-      }
-      runStreamingSync(raw);
-    });
-  }
-
-  // Minimal OLED: Token Input Enter key handler
-  if (dom.oledTokenInput) {
-    dom.oledTokenInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const raw = dom.oledTokenInput.value.trim();
-        if (!raw) {
-          logOledError('Token is empty! Please paste your 64-character PlayStation NPSSO token.', 'token empty');
-          return;
-        }
-        runStreamingSync(raw);
-      }
-    });
-  }
-
-  // Modal Closers
-  if (dom.btnModalClose && dom.gameDetailModal) {
-    dom.btnModalClose.addEventListener('click', () => {
-      closeModalAnimated(dom.gameDetailModal);
-    });
-  }
-
-  if (dom.gameDetailModal) {
-    dom.gameDetailModal.addEventListener('click', e => {
-      if (e.target === dom.gameDetailModal) {
-        closeModalAnimated(dom.gameDetailModal);
-      }
-    });
-  }
-
-  // Copy Simple List Modal Listeners
-  if (dom.btnOpenCopySimple) {
-    dom.btnOpenCopySimple.addEventListener('click', openCopySimpleModal);
-  }
-
-  if (dom.btnCopyModalClose && dom.copySimpleModal) {
-    dom.btnCopyModalClose.addEventListener('click', () => {
-      closeModalAnimated(dom.copySimpleModal);
-    });
-  }
-
-  if (dom.copySimpleModal) {
-    dom.copySimpleModal.addEventListener('click', e => {
-      if (e.target === dom.copySimpleModal) {
-        closeModalAnimated(dom.copySimpleModal);
-      }
-    });
-  }
-
-  if (dom.btnCopyWithPlus) {
-    dom.btnCopyWithPlus.addEventListener('click', () => copySimpleList(true));
-  }
-
-  if (dom.btnCopyWithoutPlus) {
-    dom.btnCopyWithoutPlus.addEventListener('click', () => copySimpleList(false));
-  }
-
-  // Copy Details Button
-  if (dom.btnCopyDetails) {
-    dom.btnCopyDetails.addEventListener('click', () => {
-      if (!state.activeGameDetail) return;
-      const g = state.activeGameDetail;
-      const txt = `${g.name} [${g.platform}]\nTitle ID: ${g.titleId || 'N/A'}\nLicense: ${g.isPsPlus ? 'PlayStation Plus' : 'Owned Digital'}\nPlaytime: ${g.playtime || 'N/A'}`;
-      navigator.clipboard.writeText(txt).then(() => {
-        showToast('Game specs copied to clipboard!');
-      });
-    });
-  }
-
-  // Escape Key Closer
-  window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      if (dom.gameDetailModal && !dom.gameDetailModal.classList.contains('hidden')) {
-        closeModalAnimated(dom.gameDetailModal);
-      }
-      if (dom.copySimpleModal && !dom.copySimpleModal.classList.contains('hidden')) {
-        closeModalAnimated(dom.copySimpleModal);
-      }
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeModal(els.detailModal);
+      closeModal(els.copyModal);
     }
   });
 }
 
-// App Initialization
-async function initApp() {
-  bindEventListeners();
+async function init() {
+  bindEvents();
 
-  // Fetch cached library data
-  const cachedData = await fetchCachedLibrary();
-  if (cachedData) {
-    state.library = cachedData;
-    renderMinimalOled();
-
-    const hasVisited = localStorage.getItem('psn_session_active') === 'true';
-    if (hasVisited) {
-      setOledLoggedInState();
+  try {
+    const res = await fetch("/api/library");
+    if (res.ok) {
+      state.library = await res.json();
+      renderDashboard();
+      setViewMode(localStorage.getItem("psn_session_active") === "true");
     } else {
-      setOledLoggedOutState();
+      setViewMode(false);
     }
-  } else {
-    setOledLoggedOutState();
+  } catch {
+    setViewMode(false);
   }
 
-  // Super clean website preloader dismiss
-  const preloader = document.getElementById('sitePreloader');
-  if (preloader) {
+  if (els.preloader) {
     setTimeout(() => {
-      preloader.classList.add('fade-out');
-      setTimeout(() => {
-        if (preloader.parentNode) preloader.remove();
-      }, 550);
-    }, 450);
+      els.preloader.classList.add("fade-out");
+      setTimeout(() => els.preloader.remove(), 500);
+    }, 300);
   }
 }
 
-// Kickoff on DOM Ready
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener("DOMContentLoaded", init);
